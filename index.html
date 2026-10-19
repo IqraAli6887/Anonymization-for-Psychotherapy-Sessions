@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Anonymisation, sequence and longitudinal handling — interactive figures</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,650&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7F9FB; --surface:#FFFFFF; --ink:#1E2A38; --muted:#5B6878; --line:#D5DDE6;
+  --agent:#2F6FB0; --agent-soft:#E3EEF9; --human:#B9741F; --human-soft:#FBEFDD;
+  --client:#3F7D4E; --client-soft:#E2F1E5; --ther:#6E7885; --ther-soft:#ECEFF2;
+  --bad:#B4443A; --hl:#FFE58A; --hl-ink:#1E2A38; --focus:#2F6FB0; --on-accent:#FFFFFF;
+  color-scheme: light;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121821; --surface:#1A222D; --ink:#E6ECF2; --muted:#A3AFBD; --line:#2E3A48;
+    --agent:#7FB2E8; --agent-soft:#1D2F45; --human:#F0B565; --human-soft:#3A2C17;
+    --client:#86C795; --client-soft:#1C3324; --ther:#AAB4C0; --ther-soft:#262F3A;
+    --bad:#F08A80; --hl:#8A6D10; --hl-ink:#FFF6D6; --focus:#7FB2E8; --on-accent:#0E1620; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121821; --surface:#1A222D; --ink:#E6ECF2; --muted:#A3AFBD; --line:#2E3A48;
+  --agent:#7FB2E8; --agent-soft:#1D2F45; --human:#F0B565; --human-soft:#3A2C17;
+  --client:#86C795; --client-soft:#1C3324; --ther:#AAB4C0; --ther-soft:#262F3A;
+  --bad:#F08A80; --hl:#8A6D10; --hl-ink:#FFF6D6; --focus:#7FB2E8; --on-accent:#0E1620; color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3{font-family:"Literata",Georgia,"Times New Roman",serif;font-weight:650;line-height:1.2;margin:0}
+h1{font-size:clamp(1.5rem,3.2vw,2.1rem)}
+h2{font-size:1.35rem;margin-bottom:.35rem}
+h3{font-size:1.05rem;margin-bottom:.3rem}
+p{margin:.3rem 0 .8rem;max-width:72ch}
+header{background:var(--surface);border-bottom:1px solid var(--line);padding:1.4rem clamp(1rem,4vw,2.5rem) 0}
+header p{color:var(--muted)}
+.wrap{max-width:1180px;margin:0 auto}
+nav{display:flex;gap:.25rem;overflow-x:auto;margin-top:1rem}
+nav button{font:inherit;font-weight:500;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:.6rem .9rem;cursor:pointer;white-space:nowrap}
+nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--agent)}
+nav button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+main{padding:1.5rem clamp(1rem,4vw,2.5rem) 3rem}
+section[hidden]{display:none}
+.legend{display:flex;flex-wrap:wrap;gap:1rem;margin:.4rem 0 1rem;font-size:.92rem;color:var(--muted)}
+.key{display:inline-flex;align-items:center;gap:.4rem}
+.sw{width:14px;height:14px;border-radius:4px;border:2px solid}
+.figure{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:1rem;overflow-x:auto}
+.figure svg{display:block;width:100%;height:auto;min-width:720px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:1.2rem;align-items:start}
+@media (max-width:860px){.grid2{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--agent);border-radius:10px;padding:1rem 1.2rem;margin-top:1rem}
+.panel.human{border-left-color:var(--human)}
+.panel.bad{border-left-color:var(--bad)}
+.panel dl{display:grid;grid-template-columns:7rem 1fr;gap:.35rem .9rem;margin:.6rem 0 0}
+.panel dt{color:var(--muted);font-size:.9rem}
+.panel dd{margin:0}
+.ex{background:var(--bg);border-radius:8px;padding:.6rem .8rem;margin-top:.7rem;font-size:.95rem}
+.hint{color:var(--muted);font-size:.92rem}
+svg text{font-family:"Public Sans",system-ui,sans-serif;fill:var(--ink)}
+svg .t-muted{fill:var(--muted)}
+.clk{cursor:pointer}
+.clk:hover rect,.clk:hover circle{filter:brightness(.95)}
+.sel rect,.sel circle{stroke-width:4!important}
+.controls{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:.8rem 0}
+button.btn{font:inherit;font-weight:500;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:.45rem .9rem;border-radius:8px;cursor:pointer}
+button.btn.primary{background:var(--agent);border-color:var(--agent);color:var(--on-accent)}
+button.btn:disabled{opacity:.45;cursor:default}
+.turn{background:var(--bg);border-radius:8px;padding:.7rem .9rem;margin:.5rem 0;line-height:1.7}
+.turn b{font-weight:600;color:var(--muted);font-size:.85rem;display:block}
+mark{background:var(--hl);color:var(--hl-ink);border-radius:3px;padding:0 .15em}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;padding:.45rem .55rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted)}
+td:first-child{white-space:nowrap}
+.tablewrap{overflow-x:auto}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.toggle button{font:inherit;border:0;background:var(--surface);color:var(--muted);padding:.4rem .9rem;cursor:pointer}
+.toggle button[aria-pressed="true"]{background:var(--agent-soft);color:var(--ink);font-weight:600}
+label{display:block;font-weight:500;margin:.6rem 0 .25rem}
+textarea,input,select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.4rem .5rem;width:100%}
+textarea{min-height:6.5rem;resize:vertical}
+td input,td select{min-width:8.5rem}
+.checks{list-style:none;padding:0;margin:.4rem 0}
+.checks li{padding:.35rem 0 .35rem 1.7rem;position:relative}
+.checks li::before{position:absolute;left:0;top:.3rem;font-weight:700}
+.checks li.ok::before{content:"✓";color:var(--client)}
+.checks li.warn::before{content:"!";color:var(--bad)}
+.out{white-space:pre-wrap;background:var(--bg);border-radius:8px;padding:.8rem;line-height:1.7;min-height:3rem}
+footer{color:var(--muted);font-size:.88rem;padding:0 clamp(1rem,4vw,2.5rem) 2rem}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Anonymisation, sequence and longitudinal handling</h1>
+    <p>Interactive figures for the MIND psychotherapy method. Click any box, arrow or dot to see what it means, with the patient P17 example.</p>
+    <nav role="tablist" aria-label="Figures">
+      <button role="tab" aria-selected="true" aria-controls="f1" id="t1">1. Overview</button>
+      <button role="tab" aria-selected="false" aria-controls="f2" id="t2">2. Anonymisation loop</button>
+      <button role="tab" aria-selected="false" aria-controls="f3" id="t3">3. Sequence</button>
+      <button role="tab" aria-selected="false" aria-controls="f4" id="t4">4. Over time</button>
+      <button role="tab" aria-selected="false" aria-controls="f5" id="t5">Try the change log</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+<section id="f1" role="tabpanel" aria-labelledby="t1">
+  <h2>The whole method</h2>
+  <p>Five stages. Agents find and check; humans decide and write. Click a role to see what it does.</p>
+  <div class="legend">
+    <span class="key"><span class="sw" style="background:var(--agent-soft);border-color:var(--agent)"></span>Agent: finds and checks</span>
+    <span class="key"><span class="sw" style="background:var(--human-soft);border-color:var(--human)"></span>Human: decides and writes</span>
+  </div>
+  <div class="figure"><svg id="svg1" viewBox="0 0 1000 470" role="img" aria-label="Five-stage method overview"></svg></div>
+  <div id="p1" class="panel" aria-live="polite"></div>
+</section>
+
+<section id="f2" role="tabpanel" aria-labelledby="t2" hidden>
+  <h2>Anonymisation loop</h2>
+  <p>Change only what identifies. Keep every other word. Log every change. Step through the loop with the buttons, or click a step.</p>
+  <div class="grid2">
+    <div>
+      <div class="figure"><svg id="svg2" viewBox="0 0 520 470" role="img" aria-label="Six-step anonymisation loop" style="min-width:420px"></svg></div>
+      <div class="controls">
+        <button class="btn" id="prev2">Back</button>
+        <button class="btn primary" id="next2">Next step</button>
+      </div>
+      <div id="p2" class="panel" aria-live="polite"></div>
+    </div>
+    <div>
+      <div class="controls">
+        <div class="toggle" role="group" aria-label="Show version">
+          <button aria-pressed="true" id="showBefore">Before</button>
+          <button aria-pressed="false" id="showAfter">After</button>
+        </div>
+        <span class="hint">Changed words are highlighted.</span>
+      </div>
+      <div id="turns2"></div>
+      <h3 style="margin-top:1rem">Change log (P17)</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Entity</th><th>Original</th><th>Substitute</th><th>Level</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>ENT-04</td><td>he’s 63</td><td>he’s in his sixties</td><td>L0</td><td>First use (S3), reused (S7)</td></tr>
+          <tr><td>ENT-05</td><td>the moshav</td><td>the block</td><td>L0</td><td>First use</td></tr>
+          <tr><td>ENT-06</td><td>Five years commanding cadets</td><td>Years of leading a team</td><td>L0</td><td>First use</td></tr>
+          <tr><td>ENT-07</td><td>the base</td><td>work</td><td>L0</td><td>First use</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section id="f3" role="tabpanel" aria-labelledby="t3" hidden>
+  <h2>Sequential handling</h2>
+  <p>Turns are never split, merged or deleted, so dependencies survive. Click a turn, a span or an arrow.</p>
+  <div class="legend">
+    <span class="key"><span class="sw" style="background:var(--client-soft);border-color:var(--client)"></span>Client</span>
+    <span class="key"><span class="sw" style="background:var(--ther-soft);border-color:var(--ther)"></span>Therapist</span>
+    <span class="key">Solid arrow: proposed or confirmed link</span>
+    <span class="key">Dotted arrow: unresolved</span>
+    <span class="key" style="color:var(--bad)">✕ Rejected</span>
+  </div>
+  <div class="figure"><svg id="svg3" viewBox="0 0 1000 580" role="img" aria-label="Turn sequence and dependency links between spans"></svg></div>
+  <div id="p3" class="panel" aria-live="polite"></div>
+</section>
+
+<section id="f4" role="tabpanel" aria-labelledby="t4" hidden>
+  <h2>Longitudinal handling</h2>
+  <p>Tracks follow the same person across sessions, even after anonymisation. Click a dot, the red cross or the change-log bar.</p>
+  <div class="figure"><svg id="svg4" viewBox="0 0 1000 470" role="img" aria-label="Tracks across sessions 3, 7 and 9"></svg></div>
+  <div id="p4" class="panel" aria-live="polite"></div>
+</section>
+
+<section id="f5" role="tabpanel" aria-labelledby="t5" hidden>
+  <h2>Try the change log</h2>
+  <p>Paste a turn, add one row per identifying span, then apply. The tool swaps only those spans, leaves every other word alone and runs the basic checks. Your draft is kept in this browser.</p>
+  <div class="grid2">
+    <div>
+      <label for="turnIn">Original turn</label>
+      <textarea id="turnIn"></textarea>
+      <label>Change-log rows</label>
+      <div class="tablewrap"><table id="rows">
+        <thead><tr><th>Entity ID</th><th>Original span</th><th>Substitute</th><th>Class</th><th>Level</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <div class="controls">
+        <button class="btn" id="addRow">Add row</button>
+        <button class="btn primary" id="apply">Apply changes</button>
+        <button class="btn" id="loadEx">Load example</button>
+        <button class="btn" id="clearAll">Clear</button>
+      </div>
+    </div>
+    <div>
+      <h3>Rewritten turn</h3>
+      <div class="out" id="outText"><span class="hint">Apply changes to see the rewritten turn.</span></div>
+      <h3 style="margin-top:1rem">Checks</h3>
+      <ul class="checks" id="checks"><li class="hint" style="padding-left:0">No checks run yet.</li></ul>
+      <h3 style="margin-top:1rem">Log as text</h3>
+      <textarea id="logOut" readonly aria-label="Change log as text"></textarea>
+      <div class="controls"><button class="btn" id="copyLog">Copy log</button><span class="hint" id="copyMsg" aria-live="polite"></span></div>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="wrap">Illustrative example: turns 29–31 are treated as session 3 of patient P17; spans E1–E7 come from session AA6090_9 (P17-S9). Real data stays on the BIU server; nothing typed here leaves this browser.</footer>
+
+<script>
+(function(){
+"use strict";
+const NS="http://www.w3.org/2000/svg";
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function txt(parent,x,y,s,o={}){const t=el("text",{x,y,"text-anchor":o.anchor||"middle","font-size":o.size||13,"font-weight":o.weight||400,class:o.cls||""},parent);
+  const lines=Array.isArray(s)?s:[s];lines.forEach((l,i)=>{const ts=el("tspan",{x,dy:i?(o.lh||16):0},t);ts.textContent=l;});if(o.color)t.setAttribute("style","fill:"+o.color);return t;}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function defs(svg){const d=el("defs",{},svg);
+  [["arr","var(--ink)"],["arrA","var(--agent)"],["arrH","var(--human)"],["arrB","var(--bad)"],["arrG","var(--client)"]].forEach(([id,c])=>{
+    const m=el("marker",{id:svg.id+id,viewBox:"0 0 10 10",refX:9,refY:5,markerWidth:7,markerHeight:7,orient:"auto-start-reverse"},d);
+    el("path",{d:"M0,0 L10,5 L0,10 z",style:"fill:"+c},m);});}
+function mk(svg,id){return "url(#"+svg.id+id+")";}
+function clickable(g,fn){g.classList.add("clk");g.setAttribute("tabindex","0");g.setAttribute("role","button");
+  g.addEventListener("click",fn);g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();fn();}});}
+function panel(id,o){const p=document.getElementById(id);p.className="panel"+(o.kind?" "+o.kind:"");
+  let h="<h3>"+esc(o.title)+"</h3>";if(o.text)h+="<p>"+esc(o.text)+"</p>";
+  if(o.dl){h+="<dl>";o.dl.forEach(([a,b])=>h+="<dt>"+esc(a)+"</dt><dd>"+esc(b)+"</dd>");h+="</dl>";}
+  if(o.ex)h+="<div class='ex'><strong>Example. </strong>"+esc(o.ex)+"</div>";p.innerHTML=h;}
+function select(svg,g){svg.querySelectorAll(".sel").forEach(x=>x.classList.remove("sel"));if(g)g.classList.add("sel");}
+
+/* Tabs */
+const tabs=[...document.querySelectorAll('[role="tab"]')];
+function showTab(t){tabs.forEach(b=>{const on=b===t;b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1;document.getElementById(b.getAttribute("aria-controls")).hidden=!on;});
+  try{localStorage.setItem("mf-tab",t.id);}catch(e){}}
+tabs.forEach((t,i)=>{t.addEventListener("click",()=>showTab(t));
+  t.addEventListener("keydown",e=>{if(e.key==="ArrowRight"||e.key==="ArrowLeft"){const n=tabs[(i+(e.key==="ArrowRight"?1:tabs.length-1))%tabs.length];n.focus();showTab(n);}});});
+try{const s=localStorage.getItem("mf-tab");if(s&&document.getElementById(s))showTab(document.getElementById(s));}catch(e){}
+
+/* FIGURE 1 */
+const ROLES={
+ ident:{n:"Identifier agent",h:false,sees:"The original window, then each rewrite and paraphrase; later all of a patient’s sessions together.",does:"Acts as an expert investigator: infers age, location, occupation, family and anything else identifying, with reasoning, a guess, certainty 1–5 and the spans relied on. Re-attacks every rewrite.",makes:"A flag list per window.",ex:"Flags “he’s 63” (father is 63, certainty 5) and “the moshav” (rural village, 4) in S3 T29."},
+ tag:{n:"Tagger",h:false,sees:"Transcript, identifier flags and MIND annotations.",does:"Gives each flag a span class and clinical function, links it to its MIND label, and marks words that carry labels so they are kept.",makes:"Tagged span list with suggested edit level.",ex:"“the base” is clinically relevant: it marks the switch back to despair about work. “my dad” is not flagged."},
+ rew:{n:"Rewriter",h:true,sees:"Window, flagged spans, change log, edit level, feedback.",does:"Looks up the change log first, reuses or chooses a substitute, edits only flagged spans at the lowest level that works, copies everything else exactly and logs each change as it is made.",makes:"Rewritten turns with original IDs; one log row per edit.",ex:"“he’s 63” → “he’s in his sixties” (L0, ENT-04); reused unchanged in session 7."},
+ map:{n:"Map approver",h:true,sees:"New substitutes and clinically relevant spans.",does:"A clinician checks each substitute keeps role, MIND target, valence, intensity, order of events and theme; approves or proposes another.",makes:"Approval recorded in the change log.",ex:"Approves “Years of leading a team”; would reject “I had a job” because the authority theme is lost."},
+ seq:{n:"Sequence agent",h:false,sees:"Anonymised turns and spans.",does:"The Sequential Dependency Agent places spans in turns, builds state → response → state sequences, and proposes and checks dependency links.",makes:"Dependency matrix and cue list.",ex:"T29 → T30 (question) → T31 (“Whatever. Anyway…”): dismissal and topic switch."},
+ lon:{n:"Longitudinal agent",h:false,sees:"Confirmed matrix, entity register, all sessions.",does:"The Longitudinal State Agent keys tracks to entity IDs, compares points within a track and assigns a change form.",makes:"State ledger and timelines.",ex:"Father (ENT-01): blocking autonomy in S3 and again in S9 = recurrence."},
+ revB:{n:"Reviewer",h:true,sees:"Candidate links and ledger entries with the dialogue.",does:"Confirms, changes, rejects or leaves links unresolved (Checkpoint B).",makes:"Signed Form B.",ex:"Confirms E7 → E6; leaves E5 → E4 unresolved."},
+ con:{n:"Constraint agent",h:false,sees:"Anonymised session, change log, labels, matrix.",does:"The Paraphrase Constraint Agent lists what each turn must keep: substitutes verbatim, propositions, labels, cues, disfluencies, strength and length band.",makes:"One constraint sheet per turn.",ex:"T29: keep “he’s in his sixties”, “the block”, “Years of leading a team”; keep the hedge; strength P2."},
+ par:{n:"Paraphraser",h:true,sees:"Anonymised session, change log, constraint sheets.",does:"Rewords turn by turn in session order, keeping every fixed element and the speaker’s voice; never tidies speech.",makes:"Paraphrased turns with original IDs.",ex:"T31: “Loads. Whatever. Anyway, the bigger thing is work.”"},
+ ver:{n:"Verification agent",h:false,sees:"Anonymised and paraphrased turns.",does:"The Verification & Feedback Agent re-labels blind, checks substitutes, disfluencies and cues, and returns failures with a specific note (up to 3 rounds).",makes:"Pass, return with feedback, or escalate.",ex:"“the job on base” is returned: “keep ‘work’ as logged”."},
+ rob:{n:"Robustness agent",h:false,sees:"Matrices, ledgers and outputs.",does:"Masks, perturbs and measures drift across stages.",makes:"Robustness report.",ex:"Removing T30 should stop a model treating T31 as an answer to a question."},
+ evl:{n:"Evaluation agent",h:false,sees:"Predictions, gold labels, probe results.",does:"Scores privacy, preservation, labels, sequence and longitudinal checks against baselines.",makes:"Evaluation report.",ex:"Re-identification probe on S3: four confident inferences before, none after."},
+ revR:{n:"Release reviewers",h:true,sees:"Full sessions, originals, change logs.",does:"Four checks: fidelity, blind re-coding, adjudication, and an attempt to recognise the person across all their sessions.",makes:"Release decision.",ex:"Reading S3, S7 and S9 together, the reviewer cannot recognise the person."},
+ trn:{n:"Training-data agent",h:false,sees:"Released sessions and labels.",does:"Builds task instances, splits by patient, keeps unresolved items in a challenge set.",makes:"Datasets and data cards.",ex:"All P17 material goes into one split; E5 → E4 goes to the challenge set."}
+};
+const STAGES=[{t:"1. Anonymisation",r:["ident","tag","rew","map"]},{t:"2. Sequence & history",r:["seq","lon","revB"]},{t:"3. Paraphrasing",r:["con","par","ver"]},{t:"4. Evaluation",r:["rob","evl"]},{t:"5. Review & release",r:["revR","trn"]}];
+(function(){
+ const svg=document.getElementById("svg1");defs(svg);
+ el("rect",{x:8,y:8,width:984,height:454,rx:16,fill:"none",style:"stroke:var(--muted)","stroke-dasharray":"6 6"},svg);
+ txt(svg,24,34,"All data stays on the BIU server",{anchor:"start",size:13,cls:"t-muted"});
+ const W=176,G=21,X0=24,Y0=110;
+ STAGES.forEach((s,i)=>{
+  const x=X0+i*(W+G);
+  el("rect",{x,y:Y0,width:W,height:46,rx:10,style:"fill:var(--ink)"},svg);
+  txt(svg,x+W/2,Y0+28,s.t,{size:13,weight:600,color:"var(--bg)"});
+  if(i<4)el("line",{x1:x+W+2,y1:Y0+23,x2:x+W+G-2,y2:Y0+23,style:"stroke:var(--ink)","stroke-width":2,"marker-end":mk(svg,"arr")},svg);
+  s.r.forEach((k,j)=>{
+   const R=ROLES[k],y=Y0+64+j*58,g=el("g",{},svg);
+   el("rect",{x,y,width:W,height:48,rx:9,style:`fill:var(${R.h?"--human-soft":"--agent-soft"});stroke:var(${R.h?"--human":"--agent"})`,"stroke-width":2},g);
+   txt(g,x+W/2,y+21,R.n,{size:13.5,weight:600});
+   txt(g,x+W/2,y+38,R.h?"human":"agent",{size:11,cls:"t-muted"});
+   g.setAttribute("aria-label",R.n+(R.h?", human":", agent"));
+   clickable(g,()=>{select(svg,g);show1(k);});
+  });
+ });
+ const c1=X0+W/2,c3=X0+2*(W+G)+W/2;
+ el("path",{d:`M${c1-50},${Y0} C${c1-60},${Y0-55} ${c1+60},${Y0-55} ${c1+50},${Y0}`,fill:"none",style:"stroke:var(--agent)","stroke-width":2.5,"marker-end":mk(svg,"arrA")},svg);
+ txt(svg,c1+14,Y0-48,"re-attack until nothing identifies",{size:12,weight:600,color:"var(--agent)"});
+ el("path",{d:`M${c3-50},${Y0} C${c3-60},${Y0-55} ${c3+60},${Y0-55} ${c3+50},${Y0}`,fill:"none",style:"stroke:var(--agent)","stroke-width":2.5,"marker-end":mk(svg,"arrA")},svg);
+ txt(svg,c3,Y0-48,"feedback, up to 3 rounds",{size:12,weight:600,color:"var(--agent)"});
+ const yb=Y0+64+4*58;
+ el("path",{d:`M${c3},${Y0+64+3*58-6} C${c3},${yb+80} ${c1},${yb+80} ${c1},${yb+4}`,fill:"none",style:"stroke:var(--human)","stroke-width":2.5,"stroke-dasharray":"7 5","marker-end":mk(svg,"arrH")},svg);
+ txt(svg,(c1+c3)/2,yb+72,"still failing → back to the rewriter",{size:12,weight:600,color:"var(--human)"});
+ function show1(k){const R=ROLES[k];panel("p1",{title:R.n+(R.h?" (human)":" (agent)"),kind:R.h?"human":"",dl:[["Sees",R.sees],["Does",R.does],["Produces",R.makes]],ex:R.ex});}
+ panel("p1",{title:"Click any role",text:"Each box shows what that agent or person sees, does and produces, with an example from patient P17."});
+})();
+
+/* FIGURE 2 */
+(function(){
+ const svg=document.getElementById("svg2");defs(svg);
+ const steps=[
+  {n:"Attack",w:"Identifier agent",h:false,d:"Flags every detail that could identify the client or anyone they mention, including combinations, with evidence and certainty 1–5.",ex:"Four flags in T29–T31: “he’s 63” (5), “the moshav” (4), “Five years commanding cadets” (5), “the base” (3)."},
+  {n:"Classify",w:"Tagger",h:false,d:"Decides what kind of identifier each detail is and what clinical job it does.",ex:"“he’s 63” and “the moshav”: clinically irrelevant, so coarsen. “cadets” and “the base”: clinically relevant, so use a substitute that keeps their function."},
+  {n:"Look up",w:"Rewriter",h:true,d:"Checks the patient’s change log first. Reuses an existing substitute; otherwise chooses one and sends it for clinician approval.",ex:"No entries yet for P17-S3, so four new substitutes are chosen and approved."},
+  {n:"Edit",w:"Rewriter",h:true,d:"Changes only the flagged spans, at the lowest edit level that works (L0 = swap plus at most two words). Copies every other word exactly.",ex:"All four swaps are L0; T30 is unchanged. Use the Before/After switch to compare."},
+  {n:"Log",w:"Rewriter",h:true,d:"Records each change as one row in the change log at the moment it is made.",ex:"Rows ENT-04 to ENT-07 are created with status “first use”."},
+  {n:"Re-attack",w:"Identifier agent",h:false,d:"Attacks the rewrite. If anything still identifies, the span goes back to Look up. Otherwise the session is done.",ex:"The highest certainty after rewriting is 2 (“leads a team somewhere”), so the session passes."}
+ ];
+ const cx=260,cy=240,R=165,nodes=[];
+ el("circle",{cx,cy,r:R,fill:"none",style:"stroke:var(--line)","stroke-width":2},svg);
+ const pos=i=>{const a=-Math.PI/2+i*Math.PI/3;return [cx+R*Math.cos(a),cy+R*Math.sin(a),a];};
+ for(let i=0;i<5;i++){const a1=-Math.PI/2+i*Math.PI/3+0.38,a2=-Math.PI/2+(i+1)*Math.PI/3-0.38;
+  el("path",{d:`M${cx+R*Math.cos(a1)},${cy+R*Math.sin(a1)} A${R},${R} 0 0 1 ${cx+R*Math.cos(a2)},${cy+R*Math.sin(a2)}`,fill:"none",style:"stroke:var(--ink)","stroke-width":2,"marker-end":mk(svg,"arr")},svg);}
+ const p6=pos(5),p3=pos(2);
+ el("path",{d:`M${p6[0]+10},${p6[1]+30} Q${cx-30},${cy+70} ${p3[0]-68},${p3[1]-4}`,fill:"none",style:"stroke:var(--bad)","stroke-width":2,"stroke-dasharray":"6 4","marker-end":mk(svg,"arrB")},svg);
+ txt(svg,cx-10,cy+92,"identifier still found",{size:12,weight:600,color:"var(--bad)"});
+ el("line",{x1:p6[0]+30,y1:p6[1]-30,x2:p6[0]+70,y2:p6[1]-110,style:"stroke:var(--client)","stroke-width":2.5,"marker-end":mk(svg,"arrG")},svg);
+ txt(svg,p6[0]+70,p6[1]-120,"nothing identifies → done",{size:12,weight:600,color:"var(--client)"});
+ const ctr=txt(svg,cx,cy-20,"",{size:13,cls:"t-muted"});
+ steps.forEach((s,i)=>{
+  const [x,y]=pos(i),g=el("g",{},svg);
+  el("rect",{x:x-64,y:y-27,width:128,height:54,rx:12,style:`fill:var(${s.h?"--human-soft":"--agent-soft"});stroke:var(${s.h?"--human":"--agent"})`,"stroke-width":2},g);
+  txt(g,x,y-3,(i+1)+". "+s.n,{size:14,weight:600});
+  txt(g,x,y+15,s.w,{size:11,cls:"t-muted"});
+  g.setAttribute("aria-label","Step "+(i+1)+": "+s.n);
+  clickable(g,()=>go(i));nodes.push(g);
+ });
+ let cur=0;
+ const prev=document.getElementById("prev2"),next=document.getElementById("next2");
+ const B=[["T29","Patient","I keep telling my dad, [[he’s 63]], to walk, even just round [[the moshav]]. He says yes and then nothing. [[Five years commanding cadets]] taught me people don’t change past a certain point."],["T30","Therapist","How many times have you had this conversation with him?"],["T31","Patient","Loads. Whatever. Anyway, [[the base]] is the bigger thing."]];
+ const A=[["T29","Patient","I keep telling my dad, [[he’s in his sixties]], to walk, even just round [[the block]]. He says yes and then nothing. [[Years of leading a team]] taught me people don’t change past a certain point."],["T30","Therapist","How many times have you had this conversation with him?"],["T31","Patient","Loads. Whatever. Anyway, [[work]] is the bigger thing."]];
+ const box=document.getElementById("turns2"),bB=document.getElementById("showBefore"),bA=document.getElementById("showAfter");
+ function setView(after){bB.setAttribute("aria-pressed",!after);bA.setAttribute("aria-pressed",after);
+  box.innerHTML=(after?A:B).map(([id,sp,t])=>"<div class='turn'><b>"+id+", "+sp.toLowerCase()+"</b>“"+esc(t).replace(/\[\[(.+?)\]\]/g,"<mark>$1</mark>")+"”</div>").join("");}
+ bB.addEventListener("click",()=>setView(false));bA.addEventListener("click",()=>setView(true));
+ function go(i){cur=i;select(svg,nodes[i]);const s=steps[i];ctr.textContent="Step "+(i+1)+" of 6";
+  panel("p2",{title:(i+1)+". "+s.n+" ("+s.w.toLowerCase()+")",kind:s.h?"human":"",text:s.d,ex:s.ex});
+  prev.disabled=i===0;next.textContent=i===5?"Start again":"Next step";setView(i>=3);}
+ prev.addEventListener("click",()=>go(Math.max(0,cur-1)));
+ next.addEventListener("click",()=>go(cur===5?0:cur+1));
+ go(0);
+})();
+
+/* FIGURE 3 */
+(function(){
+ const svg=document.getElementById("svg3");defs(svg);
+ txt(svg,40,36,"State → therapist response → next state (P17-S3)",{anchor:"start",size:15,weight:600});
+ const T=[{id:"T29",sp:"Client",c:"client",l:["Father won’t change","C-O: blocking autonomy"],d:"The client describes telling the father to walk and him not doing it, ending with “people don’t change past a certain point”. MIND: C-O, father, other as blocking autonomy (maladaptive)."},
+          {id:"T30",sp:"Therapist",c:"ther",l:["“How many times…?”","Exploratory question"],d:"The therapist asks how often this conversation has happened: an exploratory intervention between two client states."},
+          {id:"T31",sp:"Client",c:"client",l:["“Whatever. Anyway, work…”","Dismissal, topic switch"],d:"The client dismisses the question and switches to work (self-state S1, despair). “Anyway” is a cue that must survive rewriting and paraphrasing."}];
+ T.forEach((t,i)=>{const x=60+i*320,y=60,g=el("g",{},svg);
+  el("rect",{x,y,width:250,height:84,rx:18,style:`fill:var(--${t.c}-soft);stroke:var(--${t.c})`,"stroke-width":2},g);
+  txt(g,x+125,y+24,t.id+", "+t.sp.toLowerCase(),{size:12,cls:"t-muted",weight:600});
+  txt(g,x+125,y+47,t.l[0],{size:14,weight:600});txt(g,x+125,y+67,t.l[1],{size:12,cls:"t-muted"});
+  if(i<2)el("line",{x1:x+254,y1:y+42,x2:x+316,y2:y+42,style:"stroke:var(--ink)","stroke-width":2.5,"marker-end":mk(svg,"arr")},svg);
+  g.setAttribute("aria-label",t.id+", "+t.sp);
+  clickable(g,()=>{select(svg,g);panel("p3",{title:t.id+" ("+t.sp.toLowerCase()+")",text:t.d,ex:"If this turn were split or duplicated, as in the current anonymisation, this sequence could not be built."});});
+ });
+ txt(svg,40,214,"Dependency links between evidence spans (P17-S9, in session order)",{anchor:"start",size:15,weight:600});
+ const E=[["E1","Proud (5)","Affect"],["E2","Self-acceptance","C-S"],["E3","Father: blocking (2)","C-O"],["E4","Hopeless (2)","Affect"],["E5","Hopeless (2)","Affect"],["E6","Father: detached (2)","C-O"],["E7","Spouse: related (4)","C-O"]];
+ const ED=["“I feel that I took a little of everything… every area of my life”. Affect, proud, adaptiveness 5.","“and that’s enough.” C-S, self-acceptance and compassion; adaptiveness not recorded.","“my father takes a million and one pills… a tree grows crooked…” C-O, father, blocking autonomy, 2.","“I say well enough, I can’t… I’m not letting this thing go”. Affect, depressed/hopeless, 2.","“I felt that it was very difficult… many things were not going well”. Affect, hopeless, 2 (segment 2).","“just the emotion was not there…” C-O, father, detached or over-attached, 2 (segment 3).","“…the things I like more in my company… connected to emotion”. C-O, spouse, related, 4. Target queried because of the words “my company”."];
+ const ex=i=>90+i*137,ey=492;
+ const links=[
+  {a:1,b:0,t:"elaboration",s:"solid",d:"E2 directly completes E1: “and that’s enough” follows the statement of pride.",h:44},
+  {a:3,b:0,t:"contrast",s:"solid",d:"Proud (5) to hopeless (2) within segment 1. Confirmed only if the dialogue between them stays on the same topic.",h:150},
+  {a:4,b:3,t:"unresolved",s:"dot",d:"Same category across a segment boundary. Persistence or recurrence cannot be decided from the excerpt, so it is never used as a gold label.",h:44},
+  {a:5,b:2,t:"shift",s:"solid",d:"Same person (father), different perception: blocking autonomy → detached. Also recorded in the longitudinal ledger.",h:105},
+  {a:6,b:5,t:"target shift + contrast",s:"solid",d:"Father (2) to spouse (4), 31 characters apart: emotion absent in one relationship, present in the other. This is not evidence that the father relationship improved.",h:44},
+  {a:6,b:2,t:"rejected",s:"bad",d:"Both are C-O, but about different people with no shared topic. A label-only system would link them; the method rejects the link.",h:178}
+ ];
+ links.forEach(L=>{const x1=ex(L.a),x2=ex(L.b),y=ey-30,mid=(x1+x2)/2,top=y-L.h*1.33;
+  const g=el("g",{},svg),bad=L.s==="bad";
+  const d=`M${x1},${y} C${x1},${top} ${x2},${top} ${x2},${y}`;
+  el("path",{d,fill:"none",style:"stroke:transparent","stroke-width":16},g);
+  el("path",{d,fill:"none",style:"stroke:"+(bad?"var(--bad)":"var(--ink)"),"stroke-width":2.2,"stroke-dasharray":L.s==="dot"?"3 5":"none","marker-end":mk(svg,bad?"arrB":"arr")},g);
+  const ly=y-L.h;
+  if(bad){el("rect",{x:mid-14,y:ly-16,width:28,height:26,rx:6,style:"fill:var(--surface)"},g);txt(g,mid,ly+4,"✕",{size:22,weight:700,color:"var(--bad)"});txt(g,mid,ly-22,"rejected",{size:12,weight:600,color:"var(--bad)"});}
+  else{const tw=L.t.length*6.9+16;el("rect",{x:mid-tw/2,y:ly-15,width:tw,height:22,rx:6,style:"fill:var(--surface);stroke:var(--line)"},g);txt(g,mid,ly,L.t,{size:12,weight:600});}
+  g.setAttribute("aria-label",E[L.a][0]+" to "+E[L.b][0]+": "+L.t);
+  clickable(g,()=>{select(svg,null);panel("p3",{title:E[L.a][0]+" → "+E[L.b][0]+": "+L.t,kind:bad?"bad":"",text:L.d});});
+ });
+ E.forEach((e,i)=>{const g=el("g",{},svg),x=ex(i);
+  el("circle",{cx:x,cy:ey,r:24,style:"fill:var(--client-soft);stroke:var(--client)","stroke-width":2},g);
+  txt(g,x,ey+5,e[0],{size:14,weight:600});txt(g,x,ey+44,e[1],{size:11.5});txt(g,x,ey+60,e[2],{size:11,cls:"t-muted"});
+  g.setAttribute("aria-label",e[0]+", "+e[1]);
+  clickable(g,()=>{select(svg,g);panel("p3",{title:e[0],text:ED[i]});});
+ });
+ panel("p3",{title:"Click a turn, span or arrow",text:"The top row shows one client → therapist → client sequence. The bottom row shows how later spans depend on earlier ones."});
+})();
+
+/* FIGURE 4 */
+(function(){
+ const svg=document.getElementById("svg4");defs(svg);
+ const cols={S3:300,S7:560,S9:820};
+ const bar=el("g",{},svg);
+ el("rect",{x:200,y:20,width:760,height:44,rx:10,style:"fill:var(--human-soft);stroke:var(--human)","stroke-width":1.5},bar);
+ txt(bar,580,47,"Change log: “in his sixties” (ENT-04) is the same substitute in S3 and S7",{size:13,weight:600});
+ bar.setAttribute("aria-label","Change log bar");
+ clickable(bar,()=>{select(svg,null);panel("p4",{title:"One substitute per entity, every session",kind:"human",text:"The rewriter looks up ENT-04 before each change, so the father’s age is “in his sixties” in S3 and again in S7. If S7 used “elderly” instead, the consistency checks would fail, and the difference itself could help identify the person."});});
+ Object.entries(cols).forEach(([s,x])=>{el("line",{x1:x,y1:84,x2:x,y2:440,style:"stroke:var(--line)","stroke-width":1.5},svg);txt(svg,x,104,"Session "+s.slice(1),{size:14,weight:600});});
+ [{n:"Father (ENT-01)",y:200},{n:"Spouse (ENT-02)",y:370}].forEach(l=>{el("line",{x1:200,y1:l.y,x2:960,y2:l.y,style:"stroke:var(--line)","stroke-width":8,"stroke-linecap":"round"},svg);txt(svg,30,l.y+5,l.n,{anchor:"start",size:14,weight:600});txt(svg,30,l.y+25,"Track: C-O",{anchor:"start",size:12,cls:"t-muted"});});
+ el("path",{d:`M${cols.S3+18},192 C${cols.S3+180},140 ${cols.S9-250},140 ${cols.S9-84},190`,fill:"none",style:"stroke:var(--agent)","stroke-width":2.5,"marker-end":mk(svg,"arrA")},svg);
+ txt(svg,(cols.S3+cols.S9)/2-40,146,"recurrence",{size:13,weight:600,color:"var(--agent)"});
+ el("line",{x1:cols.S9-48,y1:200,x2:cols.S9+46,y2:200,style:"stroke:var(--agent)","stroke-width":2.5,"marker-end":mk(svg,"arrA")},svg);
+ txt(svg,cols.S9,190,"shift",{size:12.5,weight:600,color:"var(--agent)"});
+ function dot(x,y,lab,sub,info){const g=el("g",{},svg);
+  el("circle",{cx:x,cy:y,r:16,style:"fill:var(--agent-soft);stroke:var(--agent)","stroke-width":2.5},g);
+  txt(g,x,y+40,lab,{size:12.5,weight:600});if(sub)txt(g,x,y+56,sub,{size:11.5,cls:"t-muted"});
+  g.setAttribute("aria-label",lab);clickable(g,()=>{select(svg,g);panel("p4",info);});}
+ dot(cols.S3,200,"blocking autonomy","T29",{title:"S3 T29: father, blocking autonomy",text:"“He says yes and then nothing… people don’t change past a certain point.” The first point on the father track.",ex:"Opens track C-O / ENT-01."});
+ dot(cols.S7,200,"age mentioned","“in his sixties”",{title:"S7: father’s age again",kind:"human",text:"The rewriter finds ENT-04 in the change log and reuses “in his sixties”. There is no new MIND evidence here; the entity simply stays consistent.",ex:"Status in the log: reused."});
+ dot(cols.S9-66,200,"blocking (2)","E3",{title:"S9 E3: father, blocking autonomy (2)",text:"The same perception of the same person as in S3, six sessions later.",ex:"Ledger L3: S3 T29 → S9 E3 = recurrence across sessions."});
+ dot(cols.S9+66,200,"detached (2)","E6",{title:"S9 E6: father, detached (2)",text:"Same person, different perception later in session 9.",ex:"Ledger L4: E3 → E6 = shift (blocking autonomy → detached), adaptiveness 2 → 2."});
+ dot(cols.S9+66,370,"related (4)","E7, emergence",{title:"S9 E7: spouse, related (4)",text:"The first evidence on the spouse track, so it is recorded as emergence.",ex:"Ledger L5. Target queried because the words are “my company”."});
+ const xg=el("g",{},svg);
+ el("rect",{x:cols.S9-150,y:262,width:240,height:60,fill:"transparent"},xg);
+ el("line",{x1:cols.S9+66,y1:262,x2:cols.S9+66,y2:350,style:"stroke:var(--bad)","stroke-width":2,"stroke-dasharray":"6 5"},xg);
+ el("rect",{x:cols.S9+52,y:292,width:28,height:28,rx:6,style:"fill:var(--surface)"},xg);
+ txt(xg,cols.S9+66,314,"✕",{size:22,weight:700,color:"var(--bad)"});
+ txt(xg,cols.S9+40,300,"not compared:",{size:12,weight:600,anchor:"end",color:"var(--bad)"});
+ txt(xg,cols.S9+40,316,"different people",{size:12,weight:600,anchor:"end",color:"var(--bad)"});
+ xg.setAttribute("aria-label","Father versus spouse: not compared");
+ clickable(xg,()=>{select(svg,null);panel("p4",{title:"Father (2) vs spouse (4): no change entry",kind:"bad",text:"The spouse score is higher, but it is a different person. Change is only recorded within one track, so this is not evidence that the relationship with the father improved."});});
+ panel("p4",{title:"Click a dot, the red cross or the change-log bar",text:"Each lane is one person, keyed to an entity ID, so it stays valid after anonymisation."});
+})();
+
+/* TOOL */
+(function(){
+ const K="mf-changelog-v1",tb=document.querySelector("#rows tbody"),turnIn=document.getElementById("turnIn");
+ const CLASSES=["Direct identifier","Quasi-identifier, clinically irrelevant","Quasi-identifier, clinically relevant","Recognisable wording"];
+ const EX={turn:"I keep telling my dad, he’s 63, to walk, even just round the moshav. He says yes and then nothing. Five years commanding cadets taught me people don’t change past a certain point.",
+  rows:[["ENT-04","he’s 63","he’s in his sixties",1,"L0"],["ENT-05","the moshav","the block",1,"L0"],["ENT-06","Five years commanding cadets","Years of leading a team",2,"L0"]]};
+ const outText=document.getElementById("outText"),checksEl=document.getElementById("checks"),logOut=document.getElementById("logOut");
+ function addRow(v=["","","",0,"L0"]){const tr=document.createElement("tr");
+  tr.innerHTML=`<td><input aria-label="Entity ID" value="${esc(v[0])}" placeholder="ENT-01"></td><td><input aria-label="Original span" value="${esc(v[1])}"></td><td><input aria-label="Substitute" value="${esc(v[2])}"></td><td><select aria-label="Span class">${CLASSES.map((c,i)=>`<option value="${i}"${i==v[3]?" selected":""}>${c}</option>`).join("")}</select></td><td><select aria-label="Edit level">${["L0","L1","L2"].map(l=>`<option${l===v[4]?" selected":""}>${l}</option>`).join("")}</select></td><td><button class="btn" type="button">Remove</button></td>`;
+  tr.querySelector("button").addEventListener("click",()=>{tr.remove();save();});
+  tr.querySelectorAll("input,select").forEach(i=>i.addEventListener("input",save));tb.appendChild(tr);}
+ function rows(){return [...tb.querySelectorAll("tr")].map(tr=>{const f=tr.querySelectorAll("input,select");return [f[0].value.trim(),f[1].value,f[2].value,+f[3].value,f[4].value];});}
+ function save(){try{localStorage.setItem(K,JSON.stringify({turn:turnIn.value,rows:rows()}));}catch(e){}}
+ function resetOut(){outText.innerHTML="<span class='hint'>Apply changes to see the rewritten turn.</span>";checksEl.innerHTML="<li class='hint' style='padding-left:0'>No checks run yet.</li>";logOut.value="";}
+ function load(d){turnIn.value=d.turn||"";tb.innerHTML="";(d.rows&&d.rows.length?d.rows:[["","","",0,"L0"]]).forEach(addRow);}
+ let saved=null;try{saved=JSON.parse(localStorage.getItem(K)||"null");}catch(e){}
+ load(saved&&typeof saved==="object"?saved:EX);
+ turnIn.addEventListener("input",save);
+ document.getElementById("addRow").addEventListener("click",()=>{addRow();save();});
+ document.getElementById("loadEx").addEventListener("click",()=>{load(EX);save();resetOut();});
+ document.getElementById("clearAll").addEventListener("click",()=>{load({turn:"",rows:[]});save();resetOut();});
+ const wc=s=>(s.trim().match(/\S+/g)||[]).length;
+ document.getElementById("apply").addEventListener("click",()=>{
+  const src=turnIn.value,rs=rows().filter(r=>r[1]),checks=[];
+  if(!src.trim()){checksEl.innerHTML="<li class='warn'>Paste a turn first.</li>";return;}
+  if(!rs.length){checksEl.innerHTML="<li class='warn'>Add at least one row with an original span.</li>";return;}
+  const hits=[];
+  rs.forEach(r=>{const n=src.split(r[1]).length-1;
+   if(n===0)checks.push(["warn",`“${r[1]}” is not in the turn. Check spelling and apostrophes (’ and ' are different).`]);
+   else if(n>1)checks.push(["warn",`“${r[1]}” appears ${n} times; all are replaced. Make sure each one identifies.`]);
+   if(!r[2].trim())checks.push(["warn",`“${r[1]}” has no substitute. Identifying details are replaced, never deleted.`]);
+   if(!r[0])checks.push(["warn",`“${r[1]}” has no entity ID, so it cannot be reused in later sessions.`]);
+   let i=src.indexOf(r[1]);while(i>=0){hits.push({s:i,e:i+r[1].length,sub:r[2]});i=src.indexOf(r[1],i+r[1].length);} });
+  hits.sort((a,b)=>a.s-b.s);
+  if(hits.some((h,i)=>i&&h.s<hits[i-1].e))checks.push(["warn","Two rows overlap in the turn. Make each original span distinct."]);
+  let out="",html="",p=0,used=0;
+  hits.forEach(h=>{if(h.s<p)return;out+=src.slice(p,h.s)+h.sub;html+=esc(src.slice(p,h.s))+"<mark>"+esc(h.sub)+"</mark>";p=h.e;used+=h.e-h.s;});
+  out+=src.slice(p);html+=esc(src.slice(p));
+  outText.innerHTML=html;
+  const m={};rs.forEach(r=>{if(!r[0])return;if(m[r[0]]!==undefined&&m[r[0]]!==r[2])checks.push(["warn",`${r[0]} has two different substitutes (“${m[r[0]]}” and “${r[2]}”). One entity, one substitute.`]);m[r[0]]=r[2];});
+  rs.forEach(r=>{const d=wc(r[2])-wc(r[1]);if(r[4]==="L0"&&d>2)checks.push(["warn",`“${r[2]}” adds ${d} words. L0 allows at most two extra; mark it L1 if the clause needs rephrasing.`]);});
+  checks.push(["ok",`Only the listed spans changed; the other ${src.length-used} characters are copied exactly.`]);
+  checks.push(["ok","One turn in, one turn out."]);
+  const disf=s=>(s.match(/\b(um+|uh+|erm|you know)\b|\(laugh\w*\)|…|\.\.\./gi)||[]).length;
+  checks.push([disf(src)===disf(out)?"ok":"warn",`Hesitations and fillers: ${disf(src)} before, ${disf(out)} after.`]);
+  if(!checks.some(c=>c[0]==="warn"))checks.push(["ok","All basic checks pass. Next: clinician approval for new substitutes, then re-run the identifier agent."]);
+  checksEl.innerHTML=checks.map(c=>`<li class="${c[0]}">${esc(c[1])}</li>`).join("");
+  logOut.value=rs.map(r=>[r[0]||"(no ID)",`“${r[1]}”`,`“${r[2]}”`,CLASSES[r[3]],r[4],"first use"].join(" | ")).join("\n");
+  save();
+ });
+ document.getElementById("copyLog").addEventListener("click",async()=>{const msg=document.getElementById("copyMsg");
+  try{await navigator.clipboard.writeText(logOut.value);msg.textContent="Copied.";}catch(e){logOut.focus();logOut.select();msg.textContent="Selected. Press Ctrl+C (or ⌘C) to copy.";}});
+})();
+})();
+</script>
+</body>
+</html>
