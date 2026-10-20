@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>De-identification, sequence and longitudinal change — interactive figures</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,650&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7F9FB; --surface:#FFFFFF; --ink:#1E2A38; --muted:#5B6878; --line:#D5DDE6;
+  --agent:#2F6FB0; --agent-soft:#E3EEF9; --human:#B9741F; --human-soft:#FBEFDD;
+  --client:#3F7D4E; --client-soft:#E2F1E5; --ther:#6E7885; --ther-soft:#ECEFF2;
+  --bad:#B4443A; --bad-soft:#F8E3E0; --hl:#FFE58A; --hl-ink:#1E2A38; --focus:#2F6FB0; --on-accent:#FFFFFF;
+  color-scheme: light;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121821; --surface:#1A222D; --ink:#E6ECF2; --muted:#A3AFBD; --line:#2E3A48;
+    --agent:#7FB2E8; --agent-soft:#1D2F45; --human:#F0B565; --human-soft:#3A2C17;
+    --client:#86C795; --client-soft:#1C3324; --ther:#AAB4C0; --ther-soft:#262F3A;
+    --bad:#F08A80; --bad-soft:#3A1F1C; --hl:#8A6D10; --hl-ink:#FFF6D6; --focus:#7FB2E8; --on-accent:#0E1620; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121821; --surface:#1A222D; --ink:#E6ECF2; --muted:#A3AFBD; --line:#2E3A48;
+  --agent:#7FB2E8; --agent-soft:#1D2F45; --human:#F0B565; --human-soft:#3A2C17;
+  --client:#86C795; --client-soft:#1C3324; --ther:#AAB4C0; --ther-soft:#262F3A;
+  --bad:#F08A80; --bad-soft:#3A1F1C; --hl:#8A6D10; --hl-ink:#FFF6D6; --focus:#7FB2E8; --on-accent:#0E1620; color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3{font-family:"Literata",Georgia,"Times New Roman",serif;font-weight:650;line-height:1.2;margin:0}
+h1{font-size:clamp(1.5rem,3.2vw,2.1rem)}
+h2{font-size:1.35rem;margin-bottom:.35rem}
+h3{font-size:1.05rem;margin-bottom:.3rem}
+p{margin:.3rem 0 .8rem;max-width:72ch}
+header{background:var(--surface);border-bottom:1px solid var(--line);padding:1.4rem clamp(1rem,4vw,2.5rem) 0}
+header p{color:var(--muted)}
+.wrap{max-width:1180px;margin:0 auto}
+nav{display:flex;gap:.25rem;overflow-x:auto;margin-top:1rem}
+nav button{font:inherit;font-weight:500;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:.6rem .9rem;cursor:pointer;white-space:nowrap}
+nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--agent)}
+nav button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+main{padding:1.5rem clamp(1rem,4vw,2.5rem) 3rem}
+section[hidden]{display:none}
+.legend{display:flex;flex-wrap:wrap;gap:1rem;margin:.4rem 0 1rem;font-size:.92rem;color:var(--muted)}
+.key{display:inline-flex;align-items:center;gap:.4rem}
+.sw{width:14px;height:14px;border-radius:4px;border:2px solid}
+.figure{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:1rem;overflow-x:auto}
+.figure svg{display:block;width:100%;height:auto;min-width:720px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:1.2rem;align-items:start}
+@media (max-width:860px){.grid2{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--agent);border-radius:10px;padding:1rem 1.2rem;margin-top:1rem}
+.panel.human{border-left-color:var(--human)}
+.panel.bad{border-left-color:var(--bad)}
+.panel.script{border-left-color:var(--ther)}
+.panel dl{display:grid;grid-template-columns:7rem 1fr;gap:.35rem .9rem;margin:.6rem 0 0}
+.panel dt{color:var(--muted);font-size:.9rem}
+.panel dd{margin:0}
+.ex{background:var(--bg);border-radius:8px;padding:.6rem .8rem;margin-top:.7rem;font-size:.95rem}
+.hint{color:var(--muted);font-size:.92rem}
+svg text{font-family:"Public Sans",system-ui,sans-serif;fill:var(--ink)}
+svg .t-muted{fill:var(--muted)}
+.clk{cursor:pointer}
+.clk:hover rect,.clk:hover circle{filter:brightness(.95)}
+.sel rect,.sel circle{stroke-width:4!important}
+.controls{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:.8rem 0}
+button.btn{font:inherit;font-weight:500;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:.45rem .9rem;border-radius:8px;cursor:pointer}
+button.btn.primary{background:var(--agent);border-color:var(--agent);color:var(--on-accent)}
+button.btn:disabled{opacity:.45;cursor:default}
+.turn{background:var(--bg);border-radius:8px;padding:.7rem .9rem;margin:.5rem 0;line-height:1.7}
+.turn b{font-weight:600;color:var(--muted);font-size:.85rem;display:block}
+mark{background:var(--hl);color:var(--hl-ink);border-radius:3px;padding:0 .15em}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;padding:.45rem .55rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted)}
+td:first-child{white-space:nowrap}
+.tablewrap{overflow-x:auto}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.toggle button{font:inherit;border:0;background:var(--surface);color:var(--muted);padding:.4rem .9rem;cursor:pointer}
+.toggle button[aria-pressed="true"]{background:var(--agent-soft);color:var(--ink);font-weight:600}
+label{display:block;font-weight:500;margin:.6rem 0 .25rem}
+textarea,input,select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.4rem .5rem;width:100%}
+textarea{min-height:6.5rem;resize:vertical}
+td input,td select{min-width:8.5rem}
+.checks{list-style:none;padding:0;margin:.4rem 0}
+.checks li{padding:.35rem 0 .35rem 1.7rem;position:relative}
+.checks li::before{position:absolute;left:0;top:.3rem;font-weight:700}
+.checks li.ok::before{content:"✓";color:var(--client)}
+.checks li.warn::before{content:"!";color:var(--bad)}
+.out{white-space:pre-wrap;background:var(--bg);border-radius:8px;padding:.8rem;line-height:1.7;min-height:3rem}
+
+.wx{display:grid;grid-template-columns:250px minmax(0,1fr);gap:1.4rem;align-items:start}
+.wx ol{list-style:none;margin:0;padding:0;position:sticky;top:calc(env(safe-area-inset-top,0px) + .5rem)}
+.wx ol button{display:flex;gap:.6rem;width:100%;text-align:left;font:inherit;font-size:.93rem;background:none;border:0;border-left:3px solid var(--line);color:var(--muted);padding:.45rem .7rem;cursor:pointer}
+.wx ol button span{font-variant-numeric:tabular-nums;min-width:1.4rem}
+.wx ol button[aria-current="step"]{border-left-color:var(--agent);color:var(--ink);font-weight:600;background:var(--agent-soft)}
+.wx ol li.part{font-size:.8rem;color:var(--muted);font-weight:600;padding:.8rem .7rem .2rem}
+.wx ol li.part:first-child{padding-top:0}
+@media (max-width:860px){.wx{grid-template-columns:1fr}.wx ol{display:flex;overflow-x:auto;position:static;gap:.2rem}.wx ol li.part{display:none}.wx ol button{border-left:0;border-bottom:3px solid var(--line);white-space:nowrap}.wx ol button[aria-current="step"]{border-bottom-color:var(--agent)}}
+.stepcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:1.2rem 1.4rem}
+.stepcard h3{font-size:1.3rem;margin-bottom:.6rem}
+.who{display:flex;flex-wrap:wrap;gap:.4rem;margin:.2rem 0 .9rem}
+.chip{font-size:.85rem;border-radius:999px;padding:.15rem .65rem;border:1.5px solid}
+.chip.a{background:var(--agent-soft);border-color:var(--agent)}
+.chip.h{background:var(--human-soft);border-color:var(--human)}
+.chip.s{background:var(--ther-soft);border-color:var(--ther)}
+.chip.k{background:var(--client-soft);border-color:var(--client)}
+.lead{display:grid;grid-template-columns:7rem 1fr;gap:.4rem 1rem;margin:.4rem 0 1rem}
+.lead dt{font-weight:600;color:var(--muted)}
+.lead dd{margin:0;max-width:72ch}
+.stepcard h4{font-family:"Literata",Georgia,serif;font-size:1rem;margin:1.1rem 0 .4rem}
+.stepcard table{margin:.3rem 0 .6rem}
+.result{border-left:4px solid var(--client);background:var(--client-soft);border-radius:8px;padding:.7rem .9rem;margin-top:1rem}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85rem;white-space:pre-wrap;background:var(--bg);border-radius:8px;padding:.7rem .9rem;overflow-x:auto}
+footer{color:var(--muted);font-size:.88rem;padding:0 clamp(1rem,4vw,2.5rem) 2rem}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>De-identification, sequence and longitudinal change</h1>
+    <p>Interactive figures for the MIND psychotherapy method: de-identification, structuring and paraphrasing. Agents find, suggest and check; people at BIU decide. Click any box, arrow or dot to see what it means, with the patient P17 example.</p>
+    <nav role="tablist" aria-label="Figures">
+      <button role="tab" aria-selected="true" aria-controls="f1" id="t1">Overview</button>
+      <button role="tab" aria-selected="false" aria-controls="f6" id="t6">Full worked example</button>
+      <button role="tab" aria-selected="false" aria-controls="f2" id="t2">De-identification</button>
+      <button role="tab" aria-selected="false" aria-controls="f3" id="t3">Sequence</button>
+      <button role="tab" aria-selected="false" aria-controls="f4" id="t4">Over time</button>
+      <button role="tab" aria-selected="false" aria-controls="f7" id="t7">Paraphrasing</button>
+      <button role="tab" aria-selected="false" aria-controls="f5" id="t5">Try the change log</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+<section id="f1" role="tabpanel" aria-labelledby="t1">
+  <h2>The whole method</h2>
+  <p>Three parts, then release. The de-identified text is written by a human rewriter and checked by a second person; the paraphrased text is written by an Agent and approved or corrected by a BIU reviewer. There is no separate clinician approver. Click a role to see what it does.</p>
+  <div class="legend">
+    <span class="key"><span class="sw" style="background:var(--agent-soft);border-color:var(--agent)"></span>Agent: finds, suggests and checks</span>
+    <span class="key"><span class="sw" style="background:var(--human-soft);border-color:var(--human)"></span>Human: decides and writes</span>
+  </div>
+  <div class="figure"><svg id="svg1" viewBox="0 0 1000 490" role="img" aria-label="Overview of the three-part method and release"></svg></div>
+  <div id="p1" class="panel" aria-live="polite"></div>
+</section>
+
+<section id="f6" role="tabpanel" aria-labelledby="t6" hidden>
+  <h2>Full worked example, step by step</h2>
+  <p>Patient P17 followed through every step, from the raw material to the released corpus. Each step shows who does it, what happens and why, the worked example, the checks that apply and what is handed on.</p>
+  <div class="wx">
+    <ol id="wxNav" aria-label="Steps"></ol>
+    <div>
+      <article class="stepcard" id="wxCard" aria-live="polite"></article>
+      <div class="controls">
+        <button class="btn" id="wxPrev">Previous step</button>
+        <button class="btn primary" id="wxNext">Next step</button>
+        <span class="hint" id="wxCount"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="f2" role="tabpanel" aria-labelledby="t2" hidden>
+  <h2>De-identification</h2>
+  <p>Change only what identifies, never delete a turn or a non-identifying detail, keep everything else word for word, and log every decision. Step through with the buttons, or click a step.</p>
+  <div class="grid2">
+    <div>
+      <div class="figure"><svg id="svg2" viewBox="0 0 520 470" role="img" aria-label="Five-step de-identification flow" style="min-width:420px"></svg></div>
+      <div class="controls">
+        <button class="btn" id="prev2">Back</button>
+        <button class="btn primary" id="next2">Next step</button>
+      </div>
+      <div id="p2" class="panel" aria-live="polite"></div>
+    </div>
+    <div>
+      <div class="controls">
+        <div class="toggle" role="group" aria-label="Show version">
+          <button aria-pressed="true" id="showBefore">Before</button>
+          <button aria-pressed="false" id="showAfter">After</button>
+        </div>
+        <span class="hint">Changed words are highlighted.</span>
+      </div>
+      <div id="turns2"></div>
+      <h3 style="margin-top:1rem">Change log (P17)</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Entity</th><th>Original</th><th>Substitute</th><th>Decision</th><th>Level</th><th>Verifier</th></tr></thead>
+        <tbody>
+          <tr><td>ENT-04</td><td>he’s 63</td><td>he’s in his sixties</td><td>Accepted</td><td>L0</td><td>Agreed; reused in S7</td></tr>
+          <tr><td>ENT-05</td><td>the moshav</td><td>the block</td><td>Accepted, changed (keeps “walk round” natural)</td><td>L0</td><td>Agreed</td></tr>
+          <tr><td>ENT-06</td><td>Five years commanding cadets</td><td>Years of leading a team</td><td>Accepted</td><td>L0</td><td>Agreed</td></tr>
+          <tr><td>ENT-07</td><td>the base</td><td>work</td><td>Accepted, changed (re-tagged: marks the topic switch)</td><td>L0</td><td>Agreed</td></tr>
+          <tr><td>—</td><td>my company (S9 E7)</td><td>kept word for word</td><td>False alarm, discarded</td><td>—</td><td>Agreed</td></tr>
+          <tr><td>—</td><td>blood-pressure pills (S9 E3)</td><td>kept word for word</td><td>False alarm, discarded</td><td>—</td><td>Agreed</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section id="f3" role="tabpanel" aria-labelledby="t3" hidden>
+  <h2>Sequential dependency</h2>
+  <p>Turns are never split, merged, moved or deleted, so dependencies survive. The Sequential Dependency Agent proposes links; a BIU reviewer confirms them at Checkpoint B. Click a turn, a span or an arrow.</p>
+  <div class="legend">
+    <span class="key"><span class="sw" style="background:var(--client-soft);border-color:var(--client)"></span>Client</span>
+    <span class="key"><span class="sw" style="background:var(--ther-soft);border-color:var(--ther)"></span>Therapist</span>
+    <span class="key">Solid arrow: confirmed at Checkpoint B</span>
+    <span class="key">Dotted arrow: unresolved, never a gold label</span>
+    <span class="key" style="color:var(--bad)">✕ Rejected</span>
+  </div>
+  <div class="figure"><svg id="svg3" viewBox="0 0 1000 580" role="img" aria-label="Turn sequence and dependency links between spans"></svg></div>
+  <div id="p3" class="panel" aria-live="polite"></div>
+</section>
+
+<section id="f4" role="tabpanel" aria-labelledby="t4" hidden>
+  <h2>Longitudinal handling</h2>
+  <p>Tracks are keyed to a MIND element and an entity ID, not to surface words, so they follow the same person across sessions after de-identification. Click a dot, the red cross or the change-log bar.</p>
+  <div class="figure"><svg id="svg4" viewBox="0 0 1000 470" role="img" aria-label="Tracks across sessions 3, 7 and 9"></svg></div>
+  <div id="p4" class="panel" aria-live="polite"></div>
+</section>
+
+<section id="f7" role="tabpanel" aria-labelledby="t7" hidden>
+  <h2>Paraphrasing</h2>
+  <p>QMUL’s paraphrasing Agent rewords each de-identified turn in session order. Automatic checks send failures back up to three times; a BIU reviewer then approves or corrects every turn. Click any box.</p>
+  <div class="figure"><svg id="svg7" viewBox="0 0 1000 340" role="img" aria-label="Paraphrasing loop with automatic checks and BIU review"></svg></div>
+  <div id="p7" class="panel" aria-live="polite"></div>
+  <div class="grid2" style="margin-top:1.2rem">
+    <div>
+      <h3>S3 T31 through the loop</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Round</th><th>Output</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td>Input</td><td>“Loads. Whatever. Anyway, work is the bigger thing.”</td><td>Substitute “work” (ENT-07); cue “Anyway”</td></tr>
+          <tr><td>1</td><td>“Loads. Whatever. Anyway, the bigger thing is the job on base.”</td><td>Identifier re-check: reintroduces ENT-07. Returned: “keep ‘work’ exactly as logged”</td></tr>
+          <tr><td>2</td><td>“Loads. Whatever. Anyway, the bigger thing is work.”</td><td>All checks pass</td></tr>
+          <tr><td>Review</td><td>Same</td><td>BIU reviewer: correct</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div>
+      <h3>What is fixed and what is free</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Must survive exactly</th><th>Free to reword</th></tr></thead>
+        <tbody>
+          <tr><td>Turn count, order, speaker and IDs</td><td>Sentence structure and clause order within a turn</td></tr>
+          <tr><td>Every proposition</td><td>Vocabulary, except logged substitutes</td></tr>
+          <tr><td>Logged substitutes, word for word</td><td>Idioms, if valence and strength hold</td></tr>
+          <tr><td>Dialogue act and intervention type</td><td>Length, within about ±25%</td></tr>
+          <tr><td>MIND state, target and affect</td><td>Exact position of hesitations within the turn</td></tr>
+          <tr><td>Hesitation, resistance, laughter, crying</td><td></td></tr>
+          <tr><td>Topic-switch and contrast words</td><td></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section id="f5" role="tabpanel" aria-labelledby="t5" hidden>
+  <h2>Try the change log</h2>
+  <p>Paste a turn and add one row per flagged span with the rewriter’s decision. Accepted and added spans are swapped; false alarms are kept word for word; escalated spans wait for the verifier. Your draft is kept in this browser.</p>
+  <div class="grid2">
+    <div>
+      <label for="turnIn">De-identification input (one turn)</label>
+      <textarea id="turnIn"></textarea>
+      <label>Change-log rows</label>
+      <div class="tablewrap"><table id="rows">
+        <thead><tr><th>Entity ID</th><th>Original span</th><th>Substitute</th><th>Class</th><th>Level</th><th>Decision</th><th>Reason</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <div class="controls">
+        <button class="btn" id="addRow">Add row</button>
+        <button class="btn primary" id="apply">Apply decisions</button>
+        <button class="btn" id="loadEx">Load example</button>
+        <button class="btn" id="clearAll">Clear</button>
+      </div>
+    </div>
+    <div>
+      <h3>Rewritten turn</h3>
+      <div class="out" id="outText"><span class="hint">Apply decisions to see the rewritten turn.</span></div>
+      <h3 style="margin-top:1rem">Checks</h3>
+      <ul class="checks" id="checks"><li class="hint" style="padding-left:0">No checks run yet.</li></ul>
+      <h3 style="margin-top:1rem">Log as text</h3>
+      <textarea id="logOut" readonly aria-label="Change log as text"></textarea>
+      <div class="controls"><button class="btn" id="copyLog">Copy log</button><span class="hint" id="copyMsg" aria-live="polite"></span></div>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="wrap">Illustrative example: turns 29–31 are treated as session 3 of patient P17; spans E1–E7 come from session AA6090_9 (P17-S9). Originals and change logs never leave the BIU server; nothing typed here leaves this browser.</footer>
+
+<script>
+(function(){
+"use strict";
+const NS="http://www.w3.org/2000/svg";
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function txt(parent,x,y,s,o={}){const t=el("text",{x,y,"text-anchor":o.anchor||"middle","font-size":o.size||13,"font-weight":o.weight||400,class:o.cls||""},parent);
+  const lines=Array.isArray(s)?s:[s];lines.forEach((l,i)=>{const ts=el("tspan",{x,dy:i?(o.lh||16):0},t);ts.textContent=l;});if(o.color)t.setAttribute("style","fill:"+o.color);return t;}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function defs(svg){const d=el("defs",{},svg);
+  [["arr","var(--ink)"],["arrA","var(--agent)"],["arrH","var(--human)"],["arrB","var(--bad)"],["arrG","var(--client)"]].forEach(([id,c])=>{
+    const m=el("marker",{id:svg.id+id,viewBox:"0 0 10 10",refX:9,refY:5,markerWidth:7,markerHeight:7,orient:"auto-start-reverse"},d);
+    el("path",{d:"M0,0 L10,5 L0,10 z",style:"fill:"+c},m);});}
+function mk(svg,id){return "url(#"+svg.id+id+")";}
+function clickable(g,fn){g.classList.add("clk");g.setAttribute("tabindex","0");g.setAttribute("role","button");
+  g.addEventListener("click",fn);g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();fn();}});}
+function panel(id,o){const p=document.getElementById(id);p.className="panel"+(o.kind?" "+o.kind:"");
+  let h="<h3>"+esc(o.title)+"</h3>";if(o.text)h+="<p>"+esc(o.text)+"</p>";
+  if(o.dl){h+="<dl>";o.dl.forEach(([a,b])=>h+="<dt>"+esc(a)+"</dt><dd>"+esc(b)+"</dd>");h+="</dl>";}
+  if(o.ex)h+="<div class='ex'><strong>Example. </strong>"+esc(o.ex)+"</div>";p.innerHTML=h;}
+function select(svg,g){svg.querySelectorAll(".sel").forEach(x=>x.classList.remove("sel"));if(g)g.classList.add("sel");}
+const STY={a:"fill:var(--agent-soft);stroke:var(--agent)",h:"fill:var(--human-soft);stroke:var(--human)",s:"fill:var(--ther-soft);stroke:var(--ther)",k:"fill:var(--client-soft);stroke:var(--client)",b:"fill:var(--bad-soft);stroke:var(--bad)"};
+
+/* Tabs */
+const tabs=[...document.querySelectorAll('[role="tab"]')];
+function showTab(t){tabs.forEach(b=>{const on=b===t;b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1;document.getElementById(b.getAttribute("aria-controls")).hidden=!on;});
+  try{localStorage.setItem("mf2-tab",t.id);}catch(e){}}
+tabs.forEach((t,i)=>{t.addEventListener("click",()=>showTab(t));
+  t.addEventListener("keydown",e=>{if(e.key==="ArrowRight"||e.key==="ArrowLeft"){const n=tabs[(i+(e.key==="ArrowRight"?1:tabs.length-1))%tabs.length];n.focus();showTab(n);}});});
+try{const s=localStorage.getItem("mf2-tab");if(s&&document.getElementById(s))showTab(document.getElementById(s));}catch(e){}
+
+/* FIGURE 1: overview */
+const ROLES={
+ ident:{n:"Identifier Agent",h:false,site:"Built by QMUL; runs where the data agreement allows",sees:"Overlapping windows of turns; then the rewrite; then each paraphrase; finally all of a patient’s sessions together.",does:"Acts as an investigator: infers age, place, job, family, health and anything else that narrows identity, including combinations and rare details. Gives an inference, a guess, a certainty from 1 to 5 and the evidence spans. Tuned for very few misses; false alarms are acceptable because a person checks every flag.",makes:"Agent flag log, one row per flagged span or combination.",never:"Edits text, deletes turns or decides treatment.",ex:"Flags “he’s 63” (5), “the moshav” (4), “Five years commanding cadets” (5) and “the base” (3) in S3, and the last three together as a combination."},
+ tag:{n:"Tagger Agent",h:false,site:"Built by QMUL",sees:"The session, the flag log, the MIND annotations and the entity register.",does:"Gives each flag a span class, its clinical function, the MIND label it supports, a suggested edit level and any sequence function, and lists the words a label depends on.",makes:"One tag per flag.",never:"Marks a label-carrying span for removal; edits text.",ex:"Tags “Five years commanding cadets” as clinically relevant (the authority theme behind “people don’t change”). Tags “the base” as clinically irrelevant; the rewriter later corrects this."},
+ rew:{n:"Rewriter",h:true,site:"BIU",sees:"The session, the flags and tags, the patient’s change log, and anything the verifier sends back.",does:"Looks up each entity in the change log and reuses its substitute; otherwise chooses one at the lowest edit level that works. Decides on every flag, repairs split or duplicated turns without deleting any turn ID, copies every other word exactly and logs one row per decision.",makes:"The de-identified session with original turn IDs; change-log rows.",never:"Deletes a turn or a non-identifying detail; leaves a decision unlogged.",ex:"“he’s 63” → “he’s in his sixties” (L0, ENT-04), reused unchanged in S7. Re-tags “the base” as clinically relevant because it marks the topic switch, and uses “work”."},
+ ver:{n:"Verifier",h:true,site:"BIU",sees:"The complete rewritten session, the original, the change log and the Agent flag log.",does:"Reads every turn as an outsider would; checks every rewriter decision; adds anything the Agent and the rewriter both missed; checks consistency with earlier sessions and the turn structure; sends problems back; decides escalated spans; signs off when every row is resolved. Never the person who rewrote the session.",makes:"Verifier fields in the change log; sign-off that releases the session onward.",never:"Rewrites the text themselves; passes a session with an open row.",ex:"Agrees all S3 rows, confirms “in his sixties” matches S7, and signs off S3."},
+ seq:{n:"Sequential Dependency Agent",h:false,site:"Built by QMUL",sees:"The signed-off de-identified session and the MIND span records.",does:"Places each span in its turn, builds state → therapist response → next state sequences, proposes links from cues and checks each against the dialogue; marks a link unresolved when the dialogue is not enough.",makes:"Dependency matrix, sequence records and the cue words the paraphrasing Agent must keep.",never:"Confirms a link from shared labels alone.",ex:"T29 → T30 (exploratory question) → T31 (“Whatever. Anyway…”): dismissal and topic switch; “Anyway” goes on the cue list."},
+ lon:{n:"Longitudinal State Agent",h:false,site:"Built by QMUL",sees:"Confirmed links, span records, the entity register and the order of sessions.",does:"Groups evidence into tracks by MIND element and entity ID, compares consecutive points within a track, assigns a change form and checks that relative time stays consistent across sessions.",makes:"State ledger and a timeline per track.",never:"Claims change across different people or from one evidence point.",ex:"Father (ENT-01): blocking autonomy in S3 T29 and again in S9 E3 = recurrence across sessions."},
+ revB:{n:"Checkpoint B reviewer",h:true,site:"BIU",sees:"Each candidate link or ledger entry with the dialogue around it, including therapist turns in between.",does:"Confirms, changes the type, rejects or marks unresolved, and notes problems with the underlying MIND label. A sample is reviewed twice for agreement.",makes:"Confirmed matrix and ledger; one Checkpoint B form per item.",never:"Lets an unresolved item become a gold label.",ex:"Confirms E7 → E6 (target shift and contrast); leaves E5 → E4 unresolved; queries “my company” with target Spouse."},
+ par:{n:"Paraphrasing Agent",h:false,site:"QMUL",sees:"The de-identified session in order, the turns already paraphrased, summaries of earlier sessions, the change-log entity list and a constraint sheet per turn. Never the original.",does:"Rewords one turn at a time at the strength given; copies logged substitutes exactly; keeps propositions, MIND evidence, hesitations, markers, register and topic-switch words; leaves short turns unchanged.",makes:"Paraphrased turns; one paraphrase-log row per turn and round.",never:"Merges, splits or moves turns; adds or drops content; cleans up disfluency; resolves what the speaker left open.",ex:"T31, round 1: “Loads. Whatever. Anyway, the bigger thing is the job on base.”"},
+ verA:{n:"Verification Agent",h:false,site:"QMUL; a different model family from the paraphrasing Agent",sees:"The paraphrase alone for blind re-labelling; then the de-identified turn and its constraint sheet.",does:"Re-labels the turn blind, checks substitutes, propositions, emotion strength, markers, sequence words, register, surface change and length, and asks the Identifier Agent to re-check for anything brought back. Returns a failing turn with a reason, up to three rounds.",makes:"Pass or fail per check, in the paraphrase log.",never:"Edits the paraphrase itself.",ex:"The identifier re-check flags “the job on base” in T31 (reintroduces ENT-07): “keep ‘work’ exactly as logged”."},
+ revP:{n:"Paraphrase reviewer",h:true,site:"BIU",sees:"The de-identified and paraphrased sessions, the constraint sheets and the automatic checks.",does:"Reads every paraphrase in context, gives a verdict (correct; correct with small edits; incorrect), corrects it, names the error type and whether it blocks release, and suggests a rule for the Agent. A turn they cannot correct goes back to the human rewriter.",makes:"Review and correction log; the approved paraphrased session.",never:"Rewrites more than the error needs; leaves a correction unlogged.",ex:"E4: restores “I tell myself”, because the self-talk framing is part of the evidence. Logged as meaning changed, log only."},
+ relR:{n:"Release reviewer",h:true,site:"BIU, with QMUL co-signing",sees:"All of a patient’s original, de-identified and paraphrased sessions, change logs and review logs.",does:"Four checks: fidelity; blind re-coding of MIND labels; adjudication of disagreements; an attempt to recognise the person reading all their sessions together.",makes:"Signed release form per patient, with reasons for any hold.",never:"Releases with an open blocking issue; releases originals or change logs.",ex:"Reading S3, S7 and S9 together, the reviewer cannot recognise P17."},
+ qmul:{n:"QMUL team",h:true,site:"QMUL",sees:"Only what the data agreement allows.",does:"Builds and tunes the Agents, turns BIU’s parameter sheet into Agent instructions, folds repeated reviewer rules into the prompts, runs quality checks, robustness tests and evaluation, and builds the CLPsych 2027 splits by patient.",makes:"Agent versions with change notes; weekly quality summary; CLPsych data release.",never:"Sees identifiable text outside the data agreement.",ex:"Puts all of P17’s material in one split; E5 → E4 goes to the challenge set."},
+ leads:{n:"Project leads",h:true,site:"Dana (BIU), Maria (QMUL)",sees:"Gate materials and quality summaries.",does:"Own the gates: examples sent to BIU, parameter sheet agreed, pilot and staffing confirmed, training and test data frozen, release.",makes:"Sign-off at each gate.",never:"Skip a gate.",ex:"Sign off the parameter sheet before the rewriter starts."}
+};
+const STAGES=[{t:"1. De-identification",r:["ident","tag","rew","ver"]},{t:"2. Structuring",r:["seq","lon","revB"]},{t:"3. Paraphrasing",r:["par","verA","revP"]},{t:"4. Release & CLPsych data",r:["relR","qmul","leads"]}];
+(function(){
+ const svg=document.getElementById("svg1");defs(svg);
+ el("rect",{x:8,y:8,width:984,height:474,rx:16,fill:"none",style:"stroke:var(--muted)","stroke-dasharray":"6 6"},svg);
+ txt(svg,24,34,"Originals, change logs and all intermediate versions stay on the BIU server",{anchor:"start",size:13,cls:"t-muted"});
+ const W=220,G=28,X0=18,Y0=110;
+ STAGES.forEach((s,i)=>{
+  const x=X0+i*(W+G);
+  el("rect",{x,y:Y0,width:W,height:46,rx:10,style:"fill:var(--ink)"},svg);
+  txt(svg,x+W/2,Y0+28,s.t,{size:13.5,weight:600,color:"var(--bg)"});
+  if(i<3)el("line",{x1:x+W+2,y1:Y0+23,x2:x+W+G-2,y2:Y0+23,style:"stroke:var(--ink)","stroke-width":2,"marker-end":mk(svg,"arr")},svg);
+  s.r.forEach((k,j)=>{
+   const R=ROLES[k],y=Y0+64+j*58,g=el("g",{},svg);
+   el("rect",{x,y,width:W,height:48,rx:9,style:R.h?STY.h:STY.a,"stroke-width":2},g);
+   txt(g,x+W/2,y+21,R.n,{size:13.5,weight:600});
+   txt(g,x+W/2,y+38,(R.h?"human":"agent")+", "+R.site.split(/[;,(]/)[0].replace("Built by ","").trim(),{size:11,cls:"t-muted"});
+   g.setAttribute("aria-label",R.n+(R.h?", human":", agent"));
+   clickable(g,()=>{select(svg,g);show1(k);});
+  });
+ });
+ const c1=X0+W/2,c3=X0+2*(W+G)+W/2;
+ el("path",{d:`M${c1-50},${Y0} C${c1-60},${Y0-55} ${c1+60},${Y0-55} ${c1+50},${Y0}`,fill:"none",style:"stroke:var(--human)","stroke-width":2.5,"marker-end":mk(svg,"arrH")},svg);
+ txt(svg,c1+20,Y0-48,"verifier sends problems back to the rewriter",{size:12,weight:600,color:"var(--human)"});
+ el("path",{d:`M${c3-50},${Y0} C${c3-60},${Y0-55} ${c3+60},${Y0-55} ${c3+50},${Y0}`,fill:"none",style:"stroke:var(--agent)","stroke-width":2.5,"marker-end":mk(svg,"arrA")},svg);
+ txt(svg,c3,Y0-48,"automatic checks, up to 3 rounds",{size:12,weight:600,color:"var(--agent)"});
+ const yRev=Y0+64+2*58+48,yVer=Y0+64+3*58+48;
+ el("path",{d:`M${c3},${yRev+4} C${c3},470 ${c1},470 ${c1},${yVer+6}`,fill:"none",style:"stroke:var(--human)","stroke-width":2.5,"stroke-dasharray":"7 5","marker-end":mk(svg,"arrH")},svg);
+ txt(svg,(c1+c3)/2,468,"still wrong after BIU review → back to the human rewriter",{size:12,weight:600,color:"var(--human)"});
+ function show1(k){const R=ROLES[k];panel("p1",{title:R.n+(R.h?" (human)":" (Agent)"),kind:R.h?"human":"",dl:[["Site",R.site],["Sees",R.sees],["Does",R.does],["Produces",R.makes],["Never",R.never]],ex:R.ex});}
+ panel("p1",{title:"Click any role",text:"Each box shows where the role sits, what it sees, does and produces, and what it never does, with an example from patient P17."});
+})();
+
+/* FIGURE 2: de-identification */
+(function(){
+ const svg=document.getElementById("svg2");defs(svg);
+ const steps=[
+  {n:"Identify",w:"Identifier Agent",h:false,d:"Reads the session in overlapping windows and flags every detail that could identify anyone, including combinations and rare details, with an inference, a certainty from 1 to 5 and the evidence spans. A patient-level pass looks across all sessions.",ex:"Four flags in S3 T29–T31 plus one combination (moshav + cadets + base). Two low-certainty flags in S9: “my company” and the blood-pressure pills."},
+  {n:"Tag",w:"Tagger Agent",h:false,d:"Gives each flag a span class, its clinical function, the MIND label it supports, a suggested edit level and any sequence function.",ex:"“he’s 63” and “the moshav”: clinically irrelevant, coarsen. “Five years commanding cadets”: clinically relevant, keep the authority theme. “the base”: tagged irrelevant with no sequence function, which turns out to be wrong."},
+  {n:"Rewrite",w:"Rewriter (human)",h:true,d:"Looks up each entity in the change log, decides on every flag, changes only what identifies at the lowest edit level, copies every other word and logs one row per decision.",ex:"No P17 entries yet, so four new substitutes. “the base” is accepted, changed: re-tagged as clinically relevant because it marks the switch back to work, and replaced by “work”. “my company” and the pills are false alarms, kept word for word."},
+  {n:"Verify",w:"Verifier (human)",h:true,d:"A second person reads the complete rewritten session against the original and the change log, checks every decision, adds anything missed, and checks consistency with earlier sessions and the turn structure. Problems go back to the rewriter.",ex:"All rows agreed; no missed identifiers; three turns in, three out; the Identifier Agent’s re-attack on the rewrite finds nothing above certainty 2."},
+  {n:"Sign off",w:"Verifier (human)",h:true,d:"Decides any escalated spans and signs off once every row is resolved. The de-identified session moves on to structuring and paraphrasing.",ex:"S3 signed off with its change log; S7 later reuses ENT-04 by lookup."}
+ ];
+ const N=5,stepA=2*Math.PI/N,cx=260,cy=240,R=165,nodes=[];
+ el("circle",{cx,cy,r:R,fill:"none",style:"stroke:var(--line)","stroke-width":2},svg);
+ const ang=i=>-Math.PI/2+i*stepA,pos=i=>[cx+R*Math.cos(ang(i)),cy+R*Math.sin(ang(i))];
+ for(let i=0;i<N-1;i++){const a1=ang(i)+0.45,a2=ang(i+1)-0.45;
+  el("path",{d:`M${cx+R*Math.cos(a1)},${cy+R*Math.sin(a1)} A${R},${R} 0 0 1 ${cx+R*Math.cos(a2)},${cy+R*Math.sin(a2)}`,fill:"none",style:"stroke:var(--ink)","stroke-width":2,"marker-end":mk(svg,"arr")},svg);}
+ const p2=pos(2),p3=pos(3),p4=pos(4);
+ el("path",{d:`M${p3[0]+10},${p3[1]-28} Q${cx},${cy+40} ${p2[0]-10},${p2[1]-28}`,fill:"none",style:"stroke:var(--bad)","stroke-width":2,"stroke-dasharray":"6 4","marker-end":mk(svg,"arrB")},svg);
+ txt(svg,cx,cy+48,"problem found → back to the rewriter",{size:12,weight:600,color:"var(--bad)"});
+ el("line",{x1:p4[0]-34,y1:p4[1]-29,x2:p4[0]-52,y2:p4[1]-86,style:"stroke:var(--client)","stroke-width":2.5,"marker-end":mk(svg,"arrG")},svg);
+ txt(svg,18,p4[1]-112,["signed off →","to the next stage"],{anchor:"start",size:12,weight:600,color:"var(--client)"});
+ const ctr=txt(svg,cx,cy-20,"",{size:13,cls:"t-muted"});
+ steps.forEach((s,i)=>{
+  const [x,y]=pos(i),g=el("g",{},svg);
+  el("rect",{x:x-64,y:y-27,width:128,height:54,rx:12,style:s.h?STY.h:STY.a,"stroke-width":2},g);
+  txt(g,x,y-3,(i+1)+". "+s.n,{size:14,weight:600});
+  txt(g,x,y+15,s.w,{size:11,cls:"t-muted"});
+  g.setAttribute("aria-label","Step "+(i+1)+": "+s.n);
+  clickable(g,()=>go(i));nodes.push(g);
+ });
+ let cur=0;
+ const prev=document.getElementById("prev2"),next=document.getElementById("next2");
+ const B=[["T29","Client","I keep telling my dad, [[he’s 63]], to walk, even just round [[the moshav]]. He says yes and then nothing. [[Five years commanding cadets]] taught me people don’t change past a certain point."],["T30","Therapist","How many times have you had this conversation with him?"],["T31","Client","Loads. Whatever. Anyway, [[the base]] is the bigger thing."]];
+ const A=[["T29","Client","I keep telling my dad, [[he’s in his sixties]], to walk, even just round [[the block]]. He says yes and then nothing. [[Years of leading a team]] taught me people don’t change past a certain point."],["T30","Therapist","How many times have you had this conversation with him?"],["T31","Client","Loads. Whatever. Anyway, [[work]] is the bigger thing."]];
+ const box=document.getElementById("turns2"),bB=document.getElementById("showBefore"),bA=document.getElementById("showAfter");
+ function setView(after){bB.setAttribute("aria-pressed",!after);bA.setAttribute("aria-pressed",after);
+  box.innerHTML=(after?A:B).map(([id,sp,t])=>"<div class='turn'><b>"+id+", "+sp.toLowerCase()+"</b>“"+esc(t).replace(/\[\[(.+?)\]\]/g,"<mark>$1</mark>")+"”</div>").join("");}
+ bB.addEventListener("click",()=>setView(false));bA.addEventListener("click",()=>setView(true));
+ function go(i){cur=i;select(svg,nodes[i]);const s=steps[i];ctr.textContent="Step "+(i+1)+" of "+N;
+  panel("p2",{title:(i+1)+". "+s.n+" ("+s.w+")",kind:s.h?"human":"",text:s.d,ex:s.ex});
+  prev.disabled=i===0;next.textContent=i===N-1?"Start again":"Next step";setView(i>=2);}
+ prev.addEventListener("click",()=>go(Math.max(0,cur-1)));
+ next.addEventListener("click",()=>go(cur===N-1?0:cur+1));
+ go(0);
+})();
+
+/* FIGURE 3: sequence */
+(function(){
+ const svg=document.getElementById("svg3");defs(svg);
+ txt(svg,40,36,"State → therapist response → next state (P17-S3, de-identified)",{anchor:"start",size:15,weight:600});
+ const T=[{id:"T29",sp:"Client",c:"client",l:["Father won’t change","C-O: blocking autonomy"],d:"The client describes telling the father to walk and him not doing it, ending with “people don’t change past a certain point”. MIND: C-O, father (ENT-01), other as blocking autonomy (maladaptive). “Years of leading a team” keeps the authority theme behind that belief."},
+          {id:"T30",sp:"Therapist",c:"ther",l:["“How many times…?”","Exploratory question"],d:"The therapist asks how often this conversation has happened: an exploratory intervention between two client states. The paraphrase must keep it an open question."},
+          {id:"T31",sp:"Client",c:"client",l:["“Whatever. Anyway, work…”","Dismissal, topic switch"],d:"The client dismisses the question and switches to work. “Anyway” is on the cue list: the paraphrasing Agent must keep it (or an exact equivalent), and check S re-runs after paraphrasing."}];
+ T.forEach((t,i)=>{const x=60+i*320,y=60,g=el("g",{},svg);
+  el("rect",{x,y,width:250,height:84,rx:18,style:`fill:var(--${t.c}-soft);stroke:var(--${t.c})`,"stroke-width":2},g);
+  txt(g,x+125,y+24,t.id+", "+t.sp.toLowerCase(),{size:12,cls:"t-muted",weight:600});
+  txt(g,x+125,y+47,t.l[0],{size:14,weight:600});txt(g,x+125,y+67,t.l[1],{size:12,cls:"t-muted"});
+  if(i<2)el("line",{x1:x+254,y1:y+42,x2:x+316,y2:y+42,style:"stroke:var(--ink)","stroke-width":2.5,"marker-end":mk(svg,"arr")},svg);
+  g.setAttribute("aria-label",t.id+", "+t.sp);
+  clickable(g,()=>{select(svg,g);panel("p3",{title:t.id+" ("+t.sp.toLowerCase()+")",text:t.d,ex:"Recorded as response-linked (T31 → T29 via T30) and confirmed at Checkpoint B. If the turn were split or duplicated, as in the current anonymisation, the sequence could not be built."});});
+ });
+ txt(svg,40,214,"Dependency links between evidence spans (P17-S9, in session order)",{anchor:"start",size:15,weight:600});
+ const E=[["E1","Proud (5)","Affect"],["E2","Self-acceptance","C-S"],["E3","Father: blocking (2)","C-O"],["E4","Hopeless (2)","Affect"],["E5","Hopeless (2)","Affect"],["E6","Father: detached (2)","C-O"],["E7","Spouse: related (4)","C-O"]];
+ const ED=["“I feel that I took a little of everything… every area of my life”. Affect, proud, adaptiveness 5.","“and that’s enough.” C-S, self-acceptance and compassion; adaptiveness not recorded.","“my father takes a million and one pills… a tree grows crooked…” C-O, father, blocking autonomy, 2. The pills were a false alarm in de-identification and are kept word for word.","“I say well enough, I can’t… I’m not letting this thing go”. Affect, depressed/hopeless, 2.","“I felt that it was very difficult… many things were not going well”. Affect, hopeless, 2 (segment 2).","“just the emotion was not there…” C-O, father, detached or over-attached, 2 (segment 3).","“…the things I like more in my company… connected to emotion”. C-O, spouse, related, 4. The target was queried at Checkpoint B because of the words “my company”."];
+ const ex=i=>90+i*137,ey=492;
+ const links=[
+  {a:1,b:0,t:"elaboration",s:"solid",d:"E2 directly completes E1: “and that’s enough” follows the statement of pride. Confirmed: continuous utterance.",h:44},
+  {a:3,b:0,t:"contrast",s:"solid",d:"Proud (5) to hopeless (2) within segment 1. Confirmed: the topic (life balance) is the same in between.",h:150},
+  {a:4,b:3,t:"unresolved",s:"dot",d:"Same category across a segment boundary. Persistence or recurrence cannot be decided from the dialogue, so it is kept for the challenge set and never used as a gold label.",h:44},
+  {a:5,b:2,t:"shift",s:"solid",d:"Same person (father), different perception: blocking autonomy → detached. Confirmed; also recorded in the longitudinal ledger (L4).",h:105},
+  {a:6,b:5,t:"target shift + contrast",s:"solid",d:"Father (2) to spouse (4), 31 characters apart: emotion absent in one relationship, present in the other. Confirmed. This is not evidence that the father relationship improved.",h:44},
+  {a:6,b:2,t:"rejected",s:"bad",d:"Both are C-O, but about different people with no shared topic. A label-only baseline would link them; the method rejects the link.",h:178}
+ ];
+ links.forEach(L=>{const x1=ex(L.a),x2=ex(L.b),y=ey-30,mid=(x1+x2)/2,top=y-L.h*1.33;
+  const g=el("g",{},svg),bad=L.s==="bad";
+  const d=`M${x1},${y} C${x1},${top} ${x2},${top} ${x2},${y}`;
+  el("path",{d,fill:"none",style:"stroke:transparent","stroke-width":16},g);
+  el("path",{d,fill:"none",style:"stroke:"+(bad?"var(--bad)":"var(--ink)"),"stroke-width":2.2,"stroke-dasharray":L.s==="dot"?"3 5":"none","marker-end":mk(svg,bad?"arrB":"arr")},g);
+  const ly=y-L.h;
+  if(bad){el("rect",{x:mid-14,y:ly-16,width:28,height:26,rx:6,style:"fill:var(--surface)"},g);txt(g,mid,ly+4,"✕",{size:22,weight:700,color:"var(--bad)"});txt(g,mid,ly-22,"rejected",{size:12,weight:600,color:"var(--bad)"});}
+  else{const tw=L.t.length*6.9+16;el("rect",{x:mid-tw/2,y:ly-15,width:tw,height:22,rx:6,style:"fill:var(--surface);stroke:var(--line)"},g);txt(g,mid,ly,L.t,{size:12,weight:600});}
+  g.setAttribute("aria-label",E[L.a][0]+" to "+E[L.b][0]+": "+L.t);
+  clickable(g,()=>{select(svg,null);panel("p3",{title:E[L.a][0]+" → "+E[L.b][0]+": "+L.t,kind:bad?"bad":"",text:L.d});});
+ });
+ E.forEach((e,i)=>{const g=el("g",{},svg),x=ex(i);
+  el("circle",{cx:x,cy:ey,r:24,style:"fill:var(--client-soft);stroke:var(--client)","stroke-width":2},g);
+  txt(g,x,ey+5,e[0],{size:14,weight:600});txt(g,x,ey+44,e[1],{size:11.5});txt(g,x,ey+60,e[2],{size:11,cls:"t-muted"});
+  g.setAttribute("aria-label",e[0]+", "+e[1]);
+  clickable(g,()=>{select(svg,g);panel("p3",{title:e[0],text:ED[i]});});
+ });
+ panel("p3",{title:"Click a turn, span or arrow",text:"The top row shows one client → therapist → client sequence. The bottom row shows how later spans depend on earlier ones, after Checkpoint B."});
+})();
+
+/* FIGURE 4: over time */
+(function(){
+ const svg=document.getElementById("svg4");defs(svg);
+ const cols={S3:300,S7:560,S9:820};
+ const bar=el("g",{},svg);
+ el("rect",{x:200,y:20,width:760,height:44,rx:10,style:STY.h,"stroke-width":1.5},bar);
+ txt(bar,580,47,"Change log: “in his sixties” (ENT-04) is the same substitute in S3 and S7",{size:13,weight:600});
+ bar.setAttribute("aria-label","Change log bar");
+ clickable(bar,()=>{select(svg,null);panel("p4",{title:"One substitute per entity, every session",kind:"human",text:"The rewriter looks up ENT-04 before each change, so the father’s age is “in his sixties” in S3 and again in S7; the verifier checks consistency with earlier sessions. If S7 used “elderly” instead, checks H and L would fail, and the difference itself could help identify the person. Relative time is anchored to the session date in the same way: “a few years ago” in S3 must not become “recently” in S9."});});
+ Object.entries(cols).forEach(([s,x])=>{el("line",{x1:x,y1:84,x2:x,y2:440,style:"stroke:var(--line)","stroke-width":1.5},svg);txt(svg,x,104,"Session "+s.slice(1),{size:14,weight:600});});
+ [{n:"Father (ENT-01)",y:200},{n:"Spouse (ENT-02)",y:370}].forEach(l=>{el("line",{x1:200,y1:l.y,x2:960,y2:l.y,style:"stroke:var(--line)","stroke-width":8,"stroke-linecap":"round"},svg);txt(svg,30,l.y+5,l.n,{anchor:"start",size:14,weight:600});txt(svg,30,l.y+25,"Track: C-O",{anchor:"start",size:12,cls:"t-muted"});});
+ el("path",{d:`M${cols.S3+18},192 C${cols.S3+180},140 ${cols.S9-250},140 ${cols.S9-84},190`,fill:"none",style:"stroke:var(--agent)","stroke-width":2.5,"marker-end":mk(svg,"arrA")},svg);
+ txt(svg,(cols.S3+cols.S9)/2-40,146,"recurrence",{size:13,weight:600,color:"var(--agent)"});
+ el("line",{x1:cols.S9-48,y1:200,x2:cols.S9+46,y2:200,style:"stroke:var(--agent)","stroke-width":2.5,"marker-end":mk(svg,"arrA")},svg);
+ txt(svg,cols.S9,190,"shift",{size:12.5,weight:600,color:"var(--agent)"});
+ function dot(x,y,lab,sub,info){const g=el("g",{},svg);
+  el("circle",{cx:x,cy:y,r:16,style:STY.a,"stroke-width":2.5},g);
+  txt(g,x,y+40,lab,{size:12.5,weight:600});if(sub)txt(g,x,y+56,sub,{size:11.5,cls:"t-muted"});
+  g.setAttribute("aria-label",lab);clickable(g,()=>{select(svg,g);panel("p4",info);});}
+ dot(cols.S3,200,"blocking autonomy","T29",{title:"S3 T29: father, blocking autonomy",text:"“He says yes and then nothing… people don’t change past a certain point.” The first point on the father track.",ex:"Opens track C-O / ENT-01."});
+ dot(cols.S7,200,"age mentioned","“in his sixties”",{title:"S7: father’s age again",kind:"human",text:"The rewriter finds ENT-04 in the change log and reuses “in his sixties”; the verifier confirms it matches S3. There is no new MIND evidence here; the entity simply stays consistent.",ex:"Log row: Accepted, reused; verifier agreed."});
+ dot(cols.S9-66,200,"blocking (2)","E3",{title:"S9 E3: father, blocking autonomy (2)",text:"The same perception of the same person as in S3, six sessions later.",ex:"Ledger L3: S3 T29 → S9 E3 = recurrence across sessions, confirmed at Checkpoint B."});
+ dot(cols.S9+66,200,"detached (2)","E6",{title:"S9 E6: father, detached (2)",text:"Same person, different perception later in session 9.",ex:"Ledger L4: E3 → E6 = shift (blocking autonomy → detached), adaptiveness 2 → 2."});
+ dot(cols.S9+66,370,"related (4)","E7, emergence",{title:"S9 E7: spouse, related (4)",text:"The first evidence on the spouse track, so it is recorded as emergence.",ex:"Ledger L5. Target queried at Checkpoint B because the words are “my company”."});
+ const xg=el("g",{},svg);
+ el("rect",{x:cols.S9-150,y:262,width:240,height:60,fill:"transparent"},xg);
+ el("line",{x1:cols.S9+66,y1:262,x2:cols.S9+66,y2:350,style:"stroke:var(--bad)","stroke-width":2,"stroke-dasharray":"6 5"},xg);
+ el("rect",{x:cols.S9+52,y:292,width:28,height:28,rx:6,style:"fill:var(--surface)"},xg);
+ txt(xg,cols.S9+66,314,"✕",{size:22,weight:700,color:"var(--bad)"});
+ txt(xg,cols.S9+40,300,"not compared:",{size:12,weight:600,anchor:"end",color:"var(--bad)"});
+ txt(xg,cols.S9+40,316,"different people",{size:12,weight:600,anchor:"end",color:"var(--bad)"});
+ xg.setAttribute("aria-label","Father versus spouse: not compared");
+ clickable(xg,()=>{select(svg,null);panel("p4",{title:"Father (2) vs spouse (4): no change entry",kind:"bad",text:"The spouse score is higher, but it is a different person. Change is only recorded within one track, so this is not evidence that the relationship with the father improved."});});
+ panel("p4",{title:"Click a dot, the red cross or the change-log bar",text:"Each lane is one person, keyed to an entity ID from the change log, so it stays valid after de-identification and paraphrasing."});
+})();
+
+/* FIGURE 7: paraphrasing */
+(function(){
+ const svg=document.getElementById("svg7");defs(svg);
+ const Y=110,H=64;
+ el("rect",{x:398,y:96,width:398,height:92,rx:14,fill:"none",style:"stroke:var(--agent)","stroke-dasharray":"5 5"},svg);
+ txt(svg,597,206,"automatic checks",{size:12,weight:600,color:"var(--agent)"});
+ const N=[
+  {k:"sheet",x:20,y:Y,w:150,t:"Constraint sheet",s:"built by script",c:"s",info:{title:"Constraint sheet (script)",kind:"script",text:"Built for each turn before the call, from the change log, the MIND annotations and the cue list from structuring: substitutes to copy exactly; propositions; MIND state, target and affect; therapist intervention type; markers held aside; topic-switch words; strength (moderate by default); length band (about ±25%).",ex:"T31: copy “work” verbatim; keep “Whatever” (dismissal) and “Anyway” (topic switch); short turn, light strength."}},
+  {k:"par",x:205,y:Y,w:170,t:"Paraphrasing Agent",s:"QMUL",c:"a",role:"par"},
+  {k:"ver",x:410,y:Y,w:180,t:"Verification Agent",s:"blind re-label + checks",c:"a",role:"verA"},
+  {k:"idr",x:625,y:Y,w:160,t:"Identifier re-check",s:"Identifier Agent",c:"a",info:{title:"Identifier re-check (Identifier Agent)",text:"Rewording can bring back a detail the rewriter removed. Every paraphrase is attacked again for anything that reintroduces an original detail, is more specific than the source, adds a new identifying detail, or repeats a distinctive phrase from an earlier session.",ex:"T31 round 1: “the job on base” reintroduces ENT-07; fix: keep “work” exactly as logged."}},
+  {k:"rev",x:820,y:Y,w:160,t:"BIU reviewer",s:"verdict and correction",c:"h",role:"revP"},
+  {k:"ok",x:820,y:250,w:160,t:"Approved turn",s:"moves to release",c:"k",info:{title:"Approved turn",text:"The reviewer’s verdict is correct, or correct with small edits after their correction. Every correction is logged with an error type, severity and an optional rule for the Agent; QMUL folds repeated rules into the prompts.",ex:"T29, T30 and T31 approved as written; E4 approved with one small edit."}},
+  {k:"rw",x:560,y:250,w:180,t:"Human rewriter",s:"BIU",c:"h",info:{title:"Back to the human rewriter",kind:"human",text:"A turn still wrong after review goes back to the rewriter from de-identification, who rewrites it (it then goes through review again) or marks it to be withheld.",ex:"Not needed for P17."}},
+  {k:"wh",x:300,y:250,w:200,t:"Withheld turn",s:"blocks the session from release",c:"b",info:{title:"Withheld turn",kind:"bad",text:"A withheld turn is never deleted, because that would break the turn sequence. Instead the whole session is held back from release.",ex:"Not needed for P17."}}
+ ];
+ const ctr=k=>{const n=N.find(z=>z.k===k);return n;};
+ const line=(x1,y1,x2,y2,col,lab,lx,ly,anc)=>{el("line",{x1,y1,x2,y2,style:"stroke:var(--"+(col||"ink")+")","stroke-width":2.2,"marker-end":mk(svg,col==="bad"?"arrB":col==="human"?"arrH":col==="client"?"arrG":"arr")},svg);if(lab)txt(svg,lx,ly,lab,{size:11.5,weight:600,anchor:anc||"middle",color:col?"var(--"+col+")":null});};
+ line(172,Y+32,203,Y+32);line(377,Y+32,408,Y+32);line(592,Y+32,623,Y+32);line(787,Y+32,818,Y+32,null,"pass",802,Y+22);
+ el("path",{d:`M597,96 C597,30 290,30 290,${Y-2}`,fill:"none",style:"stroke:var(--agent)","stroke-width":2.5,"marker-end":mk(svg,"arrA")},svg);
+ txt(svg,443,36,"any check fails → back with a reason, up to 3 rounds",{size:12,weight:600,color:"var(--agent)"});
+ line(900,Y+H+2,900,248,"client","correct, or corrected",892,222,"end");
+ line(845,Y+H+2,742,258,"human","cannot correct",770,206,"end");
+ line(558,280,502,280,"bad","withhold",530,270);
+ N.forEach(n=>{const g=el("g",{},svg);
+  el("rect",{x:n.x,y:n.y,width:n.w,height:n.k==="ok"||n.k==="rw"||n.k==="wh"?60:H,rx:10,style:STY[n.c],"stroke-width":2},g);
+  txt(g,n.x+n.w/2,n.y+26,n.t,{size:13.5,weight:600});txt(g,n.x+n.w/2,n.y+44,n.s,{size:11,cls:"t-muted"});
+  g.setAttribute("aria-label",n.t);
+  clickable(g,()=>{select(svg,g);if(n.role){const R=ROLES[n.role];panel("p7",{title:R.n+(R.h?" (human)":" (Agent)"),kind:R.h?"human":"",dl:[["Sees",R.sees],["Does",R.does],["Produces",R.makes],["Never",R.never]],ex:R.ex});}else panel("p7",n.info);});
+ });
+ panel("p7",{title:"Click any box",text:"The paraphrasing Agent never sees the original identifiable text, only the de-identified session and its constraint sheets."});
+})();
+
+/* FULL WORKED EXAMPLE */
+(function(){
+ const C={T:"T: turns",D:"D: function",E:"E: locality",I:"I: integrity",H:"H: consistency",C:"C: labels",R:"R: realism",S:"S: sequence",L:"L: longitudinal"};
+ const tbl=(h,rows)=>"<div class='tablewrap'><table><thead><tr>"+h.map(x=>"<th>"+x+"</th>").join("")+"</tr></thead><tbody>"+rows.map(r=>"<tr>"+r.map(c=>"<td>"+c+"</td>").join("")+"</tr>").join("")+"</tbody></table></div>";
+ const turn=(id,sp,t)=>"<div class='turn'><b>"+id+", "+sp+"</b>“"+t+"”</div>";
+ const STEPS=[
+ {part:"Before",t:"Starting material",who:[["Research team","h"]],
+  what:"Two pieces of material enter the pipeline: an illustrative excerpt treated as an earlier session (P17-S3, turns 29–31) and the seven MIND evidence spans from session AA6090_9 (P17-S9). Each turn gets a stable turn ID before any edit, and annotation rows that describe the same span are merged into one record.",
+  why:"Timestamps are unreliable as turn keys, and every later step works on turns and span records. If one statement were counted as three rows, every later step would inherit the error.",
+  body:"<h4>P17-S3, turns 29–31 (original)</h4>"+turn("T29","client","I keep telling my dad, he’s 63, to walk, even just round the moshav. He says yes and then nothing. Five years commanding cadets taught me people don’t change past a certain point.")+turn("T30","therapist","How many times have you had this conversation with him?")+turn("T31","client","Loads. Whatever. Anyway, the base is the bigger thing.")+
+   "<h4>P17-S9, evidence spans (from 16 annotation rows)</h4>"+tbl(["ID","Seg","Element","Category","Adapt.","Target","Span (shortened)"],[
+   ["E1","1","Affect","Proud","5","—","“I feel that I took a little of everything… every area of my life”"],
+   ["E2","1","C-S","Self-acceptance and compassion","not recorded","—","“and that’s enough.”"],
+   ["E3","1","C-O","Other as blocking autonomy","2","Father","“my father takes a million and one pills… a tree grows crooked…”"],
+   ["E4","1","Affect","Depressed, despair, hopeless","2","—","“I say well enough, I can’t… I’m not letting this thing go”"],
+   ["E5","2","Affect","Depressed, despair, hopeless","2","—","“I felt that it was very difficult… many things were not going well”"],
+   ["E6","3","C-O","Other as detached or over-attached","2","Father","“just the emotion was not there…”"],
+   ["E7","3","C-O","Other as related","4","Spouse","“…the things I like more in my company… connected to emotion”"]])+
+   "<p class='hint'>Logged issues: E2 has no adaptiveness row (kept as “not recorded”, never guessed); E1 contains hidden zero-width characters (normalised, original offsets kept); E7 pairs “my company” with target Spouse (queried, not corrected).</p>",
+  checks:[],result:"Three S3 turns with stable IDs and seven S9 span records, each with original offsets and an issue log."},
+
+ {part:"Part 1: de-identification",t:"Identify",who:[["Identifier Agent","a"]],
+  what:"The Identifier Agent reads each session in overlapping windows of turns, acting as an investigator. For every detail that could identify the client, the therapist or anyone they mention, it records an inference, a guess, a certainty from 1 to 5 and the evidence spans. It also flags combinations and rare details, and later runs a patient-level pass across all sessions.",
+  why:"You cannot remove what you have not found. The Agent is tuned for high recall: a miss is a privacy failure, while a false alarm costs the rewriter a few seconds.",
+  body:"<h4>Agent flag log</h4>"+tbl(["Turns","Span","Inference","Guess","Cert.","Evidence"],[
+   ["S3 T29","“he’s 63”","Exact age of a parent narrows the family","Father is 63","5","T29"],
+   ["S3 T29","“the moshav”","A specific type of rural cooperative village","Grew up in a moshav","4","T29"],
+   ["S3 T29","“Five years commanding cadets”","Specific military rank and duration","Officer training cadets for five years","5","T29"],
+   ["S3 T31","“the base”","Workplace referred to as a base","Works on a military base","3","T31"],
+   ["S3 T29, T31","combination","Former officer from a rural community, now working on a base","Narrows to a small group","4","T29, T31"],
+   ["S9 E3","“a million and one pills… blood pressure”","Health detail about a third party","Father has high blood pressure","2","E3"],
+   ["S9 E7","“my company”","Could be an employer","Works for a company","1","E7"]])+
+   "<h4>Patient-level pass</h4><p>Across S3, S7 and S9 nothing new identifies only in combination; the father’s age in S7 is the same entity as in S3.</p>",
+  checks:[],result:"Seven flags: five in S3 at certainty 3 or above, two in S9 below 3."},
+
+ {part:"Part 1: de-identification",t:"Tag",who:[["Tagger Agent","a"]],
+  what:"The Tagger Agent gives each flag a span class, its clinical function, the MIND label it supports, a suggested treatment and edit level, and any sequence function. It lists the words a label depends on so they are kept.",
+  why:"The same treatment does not fit every detail. An age that only says “older” can be coarsened; a military role that carries the client’s belief about authority needs a substitute that keeps that theme.",
+  body:tbl(["Span","Class","Clinical function","Sequence fn.","Treatment","Level"],[
+   ["“he’s 63”","Quasi-identifier, irrelevant","Only says the father is older","none","Coarsen","L0"],
+   ["“the moshav”","Quasi-identifier, irrelevant","Just a setting","none","Coarsen","L0"],
+   ["“Five years commanding cadets”","Quasi-identifier, relevant","Authority theme behind “people don’t change”; C-O/father","none","Function-preserving substitute","L0"],
+   ["“the base”","Quasi-identifier, irrelevant","Tagged as a setting only","none","Coarsen","L0"],
+   ["Blood-pressure pills (E3)","Everything else","Father refusing help; evidence for C-O/father","none","Keep","—"],
+   ["“my company” (E7)","Everything else","Evidence for the C-O label","none","Keep","—"]])+
+   "<h4>Label-carrying words</h4><p>“my dad” and “my father” carry the C-O/father labels and identify no one; they still get an entity ID (ENT-01) so tracks can follow them. “a tree grows crooked” is a common idiom, kept word for word.</p>"+
+   "<p class='hint'>The tag on “the base” misses its sequence function; the rewriter catches this in the next step.</p>",
+  checks:[],result:"One tag per flag, ready for the rewriter."},
+
+ {part:"Part 1: de-identification",t:"Rewrite",who:[["Human rewriter (BIU)","h"],["Substitute suggestion (optional aid)","a"]],
+  what:"Before each change, the rewriter looks up the entity in P17’s change log. If a substitute exists, it is reused; if not, the rewriter chooses one (and may ask the Agent for one option per rung of the generalisation ladder). The rewriter decides on every flag, applies substitutes at the lowest edit level that works, copies every other word exactly and logs one row per decision.",
+  why:"The log makes every edit auditable, records the Agent’s misses and false alarms, and guarantees one substitute per person, place or event across all sessions. Copying everything else protects labels, sequence and realism.",
+  body:"<h4>Decisions</h4>"+tbl(["Span","Decision","Substitute","Reason"],[
+   ["“he’s 63”","Accepted","he’s in his sixties","Exact age narrows the family"],
+   ["“the moshav”","Accepted, changed","the block","Agent suggested “our small village”; “the block” keeps “walk round” natural"],
+   ["“Five years commanding cadets”","Accepted","Years of leading a team","Keeps the authority theme"],
+   ["“the base”","Accepted, changed","work","Re-tagged as clinically relevant: it marks the topic switch back to work"],
+   ["Blood-pressure pills (E3)","False alarm, discarded","kept","Common health detail; evidence for E3"],
+   ["“my company” (E7)","False alarm, discarded","kept","Not identifying; evidence for E7"]])+
+   "<h4>Ladder for ENT-05</h4>"+tbl(["Rung","Option"],[["Exact","the moshav"],["Specific category","our small village"],["Broad category","the neighbourhood"],["Abstract reference","where I live"]])+
+   "<h4>One full log row</h4>"+tbl(["Field","Value"],[["Patient, session, turn, speaker","P17, S3, T29, Client"],["Original span","he’s 63"],["Source","Agent flag"],["Agent certainty","5"],["Agent tag","Quasi-identifier, clinically irrelevant"],["Decision","Accepted"],["Substitute","he’s in his sixties"],["Entity ID","ENT-04, father’s age (reused in every session)"],["Edit level","L0"],["Reason","Exact age narrows the family"],["Function kept","Role, target, valence, order, theme: yes"],["Verifier check","(filled in at the next step)"],["Rewriter, date","Initials, date"]])+
+   "<h4>Rewritten turns</h4>"+turn("T29","client","I keep telling my dad, <mark>he’s in his sixties</mark>, to walk, even just round <mark>the block</mark>. He says yes and then nothing. <mark>Years of leading a team</mark> taught me people don’t change past a certain point.")+turn("T30","therapist (unchanged)","How many times have you had this conversation with him?")+turn("T31","client","Loads. Whatever. Anyway, <mark>work</mark> is the bigger thing.")+
+   "<h4>Later: session 7</h4><p>The father’s age comes up again. The rewriter finds ENT-04 and reuses “in his sixties”.</p>",
+  checks:["T","E","I","R","S","H"],result:"Rewritten T29 and T31; T30 and all S9 text unchanged; six log rows, one per decision."},
+
+ {part:"Part 1: de-identification",t:"Verify and sign off",who:[["Human verifier (BIU)","h"],["Identifier Agent","a"]],
+  what:"A second person, never the rewriter, reads the complete rewritten session against the original and the change log. They check every decision, add anything both the Agent and the rewriter missed, check consistency with the patient’s earlier sessions and the turn structure, and send problems back. The Identifier Agent attacks the rewrite again, and a script checks the log against the text. The verifier signs off when every row is resolved.",
+  why:"A substitute that loses its function damages the labels; one that still identifies defeats the purpose. A full read by a second person catches both before anything else happens.",
+  body:"<h4>Verifier fields</h4>"+tbl(["Entity","Substitute","Function kept?","Verifier check"],[
+   ["ENT-04","he’s in his sixties","Still an older parent; matches S7","Agreed"],
+   ["ENT-05","the block","Still a setting","Agreed"],
+   ["ENT-06","Years of leading a team","Authority theme kept; “I had a job” would have lost it","Agreed"],
+   ["ENT-07","work","Topic switch to work kept","Agreed"],
+   ["—","Two false alarms","Kept word for word","Agreed"]])+
+   "<p>Missed identifiers added by the verifier: none in this excerpt.</p>"+
+   "<h4>Re-attack on the rewrite</h4>"+tbl(["Inference","Certainty"],[["Leads a team somewhere","2"],["Father is in his sixties","2"],["Lives in a residential area","1"]])+
+   "<h4>Log–text script</h4>"+tbl(["Check","Result"],[["Every changed span has a log row","4 of 4"],["Every log row appears in the text","4 of 4"],["Turns in vs out","3 vs 3"],["Words outside flagged spans changed","0"]]),
+  checks:["D","H","L"],result:"S3 signed off and handed on with its change log. The “my company” target query stays open for the annotation team."},
+
+ {part:"Part 2: structuring",t:"Sequential dependency",who:[["Sequential Dependency Agent","a"]],
+  what:"The Agent places each span in its turn, builds client state → therapist response → next client state sequences, and proposes dependency links from cues. It checks each candidate against the dialogue and lists the cue words the paraphrasing Agent must keep.",
+  why:"Process research needs to know what follows what, including the therapist’s turn in between. Shared labels alone can create false links, so every link must cite dialogue evidence.",
+  body:"<h4>Sequence (P17-S3)</h4>"+tbl(["Client state","Therapist response","Next client state"],[["T29: C-O/father, blocking autonomy","T30: exploratory question","T31: dismissal, switch to work"]])+
+   "<h4>Candidates (P17-S9)</h4>"+tbl(["Later → earlier","Cue","Proposed type","Status"],[
+   ["E2 → E1","Adjacent, both adaptive","Elaboration","Candidate (high)"],
+   ["E4 → E1","Same element, 5 → 2","Contrast","Candidate"],
+   ["E5 → E4","Same category, new segment","Persistence or recurrence","Unresolved"],
+   ["E6 → E3","Same person, different category","Shift or elaboration","Candidate"],
+   ["E7 → E6","Same element, different person, 2 → 4","Target shift + contrast","Candidate (high)"],
+   ["E7 → E3","Different person","No dependency","Rejected"],
+   ["{E3, E6} → E7","Emotion absent with father, present with partner","Joint contrast","Candidate"],
+   ["T31 → T29 via T30","Question, then “Whatever. Anyway…”","Response-linked","Candidate"]])+
+   "<h4>Cue list for paraphrasing</h4><p>“Whatever” in T31 (dismissal); “Anyway” in T31 (topic switch); the hedge “past a certain point” in T29.</p>",
+  checks:["S"],result:"Dependency matrix with candidate, rejected, unresolved and joint cells, plus the cue list."},
+
+ {part:"Part 2: structuring",t:"Checkpoint B",who:[["Checkpoint B reviewer (BIU)","h"]],
+  what:"A trained reviewer reads the dialogue around each candidate, including therapist turns in between, and confirms it, changes its type, rejects it or leaves it unresolved, noting any problem with the underlying MIND label.",
+  why:"Confirmed links become gold labels for CLPsych 2027, so people who understand the clinical material must agree them.",
+  body:tbl(["Link","Decision","Dialogue evidence"],[
+   ["E2 → E1","Confirmed: elaboration","Continuous utterance"],
+   ["E4 → E1","Confirmed: contrast","Same topic (life balance) in between"],
+   ["E5 → E4","Unresolved","Segment boundary; topic change cannot be judged"],
+   ["E6 → E3","Confirmed: shift","Both describe the father’s emotional stance"],
+   ["E7 → E6","Confirmed: target shift + contrast","The two statements, 31 characters apart, compare emotion in two relationships"],
+   ["E7 → E3","Rejected","Different person"],
+   ["T31 → T29 via T30","Confirmed: response-linked","Dismissal of the therapist’s question, then topic switch"]])+"<p>Annotation issue: “my company” with target Spouse, sent to the MIND annotators.</p>",
+  checks:["S"],result:"Confirmed dependency matrix. E5 → E4 is kept for the challenge set but never used as a gold label."},
+
+ {part:"Part 2: structuring",t:"Longitudinal ledger",who:[["Longitudinal State Agent","a"],["Checkpoint B reviewer (BIU)","h"]],
+  what:"The Agent groups evidence into tracks keyed to a MIND element and entity ID, compares consecutive points within each track across sessions, assigns a change form and checks relative time across sessions. The Checkpoint B reviewer confirms each entry.",
+  why:"Change can be claimed only for the same thing about the same person. Keying tracks to entity IDs, not words, keeps them valid after de-identification and paraphrasing.",
+  body:tbl(["Entry","Track","Earlier → later","Change form","Adapt."],[
+   ["L1","Affect / self","S9 E1 → S9 E4","Maladaptive movement within the session","5 → 2"],
+   ["L2","Affect / self","S9 E4 → S9 E5","Unresolved (persistence or recurrence)","2 → 2"],
+   ["L3","C-O / ENT-01 father","S3 T29 → S9 E3","Recurrence across sessions","not rated → 2"],
+   ["L4","C-O / ENT-01 father","S9 E3 → S9 E6","Shift (blocking autonomy → detached)","2 → 2"],
+   ["L5","C-O / ENT-02 spouse","S9 E7","Emergence","4"]])+
+   "<h4>Deliberately not recorded</h4><p>S9 E6 (father, 2) vs E7 (spouse, 4): different people, so not a change entry.</p>"+
+   "<h4>Consistency across sessions</h4><p>ENT-04 is “in his sixties” in S3 and S7; no time conflicts found.</p>",
+  checks:["L","H"],result:"Five ledger entries across three tracks, each linked to its sessions, turns and spans."},
+
+ {part:"Part 3: paraphrasing",t:"Constraint sheet and paraphrase",who:[["Script","s"],["Paraphrasing Agent (QMUL)","a"]],
+  what:"A script builds a constraint sheet for each turn from the change log, the MIND annotations and the cue list. The paraphrasing Agent then rewords each de-identified turn in session order, seeing the preceding turns (already paraphrased and approved), summaries of earlier sessions and the entity list, but never the original.",
+  why:"Paraphrasing removes remaining surface matches with the original. The sheet keeps clinical meaning, labels, sequence cues and logged substitutes fixed.",
+  body:"<h4>Constraint sheet for T29</h4>"+tbl(["Item","Constraint"],[
+   ["Substitutes verbatim","he’s in his sixties · the block · Years of leading a team"],
+   ["Propositions","Client keeps urging father to walk; father agrees then doesn’t; client believes people don’t change after a point"],
+   ["MIND","C-O, father (ENT-01), other as blocking autonomy"],
+   ["Sequence cues","Hedge “past a certain point”"],
+   ["Markers","None"],
+   ["Strength","Moderate (default)"],["Length band","0.75–1.25"]])+
+   "<h4>First drafts</h4>"+tbl(["Turn","Strength","Paraphrase"],[
+   ["S3 T29","Moderate","“My dad’s in his sixties, and I keep telling him to walk, even just round the block. He says yes, and then nothing happens. Years of leading a team taught me that past a certain point, people don’t change.”"],
+   ["S3 T30","Moderate","“How often have the two of you had this conversation?”"],
+   ["S3 T31","Light","“Loads. Whatever. Anyway, the bigger thing is the job on base.”"],
+   ["S9 E4","Moderate","“I tell myself, that’s it, I can’t do this, and still I won’t let it go.”"]]),
+  checks:[],result:"First-draft paraphrases, each logged with its input version, context, constraints and strength."},
+
+ {part:"Part 3: paraphrasing",t:"Automatic checks",who:[["Verification Agent (QMUL)","a"],["Identifier Agent","a"]],
+  what:"The Verification Agent, from a different model family, first re-labels each paraphrase blind, then checks it against the de-identified turn and its sheet. The Identifier Agent attacks it again. A failing turn goes back to the paraphrasing Agent with a reason, up to three rounds.",
+  why:"Rewording can reintroduce an identifier or shift a label. An independent, blind check catches both, and a specific reason lets the Agent fix it.",
+  body:tbl(["Turn","Round","Finding","Result"],[
+   ["T29","1","Substitutes verbatim; blind label C-O/father/blocking autonomy; hedge kept","Pass"],
+   ["T30","1","Still an exploratory question","Pass"],
+   ["T31","1","Identifier re-check: “the job on base” reintroduces ENT-07","Return: “keep ‘work’ exactly as logged”"],
+   ["T31","2","“Loads. Whatever. Anyway, the bigger thing is work.”","Pass"],
+   ["E4","1","Blind label anxious/tense, not hopeless","Return: “keep the sense of giving up, not worry”"],
+   ["E4","2","“I’m done, I can’t, and still I won’t let it go.” Blind label hopeless, 2","Pass"]]),
+  checks:["T","D","I","C","R","S"],result:"All four turns pass the automatic checks: T29 and T30 in one round, T31 and E4 in two."},
+
+ {part:"Part 3: paraphrasing",t:"BIU review",who:[["Paraphrase reviewer (BIU)","h"]],
+  what:"A bilingual, clinically trained reviewer reads every paraphrase in context, gives a verdict, corrects it where needed and logs why. A turn they cannot correct goes back to the human rewriter, who rewrites it or marks it to be withheld.",
+  why:"The automatic checks catch rule breaks; only clinical judgement catches subtler shifts in meaning. The corrections also become rules that QMUL folds into the Agent’s prompt.",
+  body:tbl(["Turn","Verdict"],[["T29","Correct"],["T30","Correct"],["T31","Correct"],["E4","Correct with small edits"]])+
+   "<h4>Review and correction log row</h4>"+tbl(["Field","Value"],[["Patient, session, turn, round","P17, S9, E4 turn, round 2"],["Verdict","Correct with small edits"],["Error type","Meaning changed"],["Before","“I’m done, I can’t, and still I won’t let it go.”"],["After","“I tell myself that’s enough, I can’t, and still I won’t let it go.”"],["Why it matters","The original reports what she says to herself (“I say well enough”); dropping it turns self-talk into a plain statement"],["Severity","Log only"],["Suggested rule","Keep reported self-talk (“I say”, “I tell myself”)"],["Reviewer, date, minutes","Initials, date, minutes"]]),
+  checks:["C"],result:"Approved paraphrased S3 and S9; one correction logged; no turn withheld."},
+
+ {part:"Release",t:"Quality checks and evaluation",who:[["QMUL team","h"],["Scripts and Agents","a"]],
+  what:"The nine quality checks run after de-identification and again after paraphrasing. Robustness tests mask, perturb and follow error across stages, and evaluation compares the method with the current anonymisation and simpler baselines.",
+  why:"These results show whether the method removes what identifies while keeping what the research needs, and whether models trained on the data rely on the dialogue rather than shortcuts.",
+  body:"<h4>Robustness tests</h4>"+tbl(["Test","Manipulation","Expected","Outcome"],[
+   ["Masking","Remove T30","T31 no longer treated as a response to a question","Met"],
+   ["Masking","Remove E1","The E4 contrast link disappears","Met"],
+   ["Perturbation","Change E6’s target to ENT-02","E6 → E3 rejected","Met"],
+   ["Longitudinal","“elderly” instead of “in his sixties” in S7","H fails; L flags an inconsistent entity","Met"],
+   ["Accumulated error","T29 original → rewrite → paraphrase → blind re-label","C-O / father / blocking autonomy at every stage","Met"]])+
+   "<h4>Evaluation for P17</h4>"+tbl(["Area","Result"],[
+   ["Privacy","Correct inferences at certainty 3+: 5 on the original; 0 after de-identification and after paraphrasing"],
+   ["Agent performance","7 flags, 0 misses; 2 false alarms (precision 5 of 7)"],
+   ["Preservation","T, D, E, I, H, R pass for S3 and S9"],
+   ["Clinical labels","Blind re-labels agree for T29, E3, E4, E7"],
+   ["Paraphrase quality","3 correct, 1 correct with small edits, 0 incorrect"],
+   ["Sequence","All confirmed links and the “Anyway” switch survive"],
+   ["Longitudinal","0 inconsistent substitutes or time phrases"],
+   ["Baselines","A label-only baseline links E7 → E3 (false); the method rejects it"]]),
+  checks:["T","D","E","I","H","C","R","S","L"],result:"Quality, robustness and evaluation reports for P17."},
+
+ {part:"Release",t:"Release and CLPsych data",who:[["Release reviewer (BIU, QMUL co-signs)","h"],["QMUL team","h"]],
+  what:"The release reviewer reads all of P17’s original, de-identified and paraphrased sessions with the logs, and carries out four checks. Only passing sessions are released. QMUL then builds training and test instances from released sessions only.",
+  why:"The corpus comes from real sessions, so nothing leaves BIU without human sign-off, and change logs and originals never leave at all.",
+  body:"<h4>Four checks</h4>"+tbl(["Check","Result"],[
+   ["Fidelity: meaning, clinical logic, therapist intent, log matches text","Pass"],
+   ["Blind re-coding of MIND labels","Pass"],
+   ["Adjudication of disagreements","Pass (E7 target query documented)"],
+   ["Recognition attempt reading S3, S7 and S9 together","Person not recognised"]])+
+   "<h4>Instances built</h4>"+tbl(["Task","Instance"],[["Span labelling","E3: C-O / father / blocking autonomy"],["Dependency recognition","E7 → E6, target shift and contrast"],["Sequence prediction","S3 T29 → T30 → T31"],["Change-form classification","L3: recurrence across sessions for C-O / ENT-01"],["Challenge set","E5 → E4 (unresolved)"]])+
+   "<h4>Example instance (JSONL)</h4><div class='code'>{\"task\": \"dependency\", \"patient\": \"P17\", \"session\": \"S9\",\n \"earlier\": {\"id\": \"E6\", \"element\": \"C-O\", \"entity\": \"ENT-01\"},\n \"later\": {\"id\": \"E7\", \"element\": \"C-O\", \"entity\": \"ENT-02\"},\n \"label\": \"target_shift+contrast\", \"status\": \"confirmed\",\n \"provenance\": {\"turns\": [\"…\"], \"pipeline\": \"…\", \"checkpoint_b\": \"confirmed\"}}</div>"+
+   "<p>All P17 material goes into one split, so no model is tested on a patient it was trained on.</p>",
+  checks:["C","L"],result:"P17 sessions released with MIND labels; instances built with full provenance and a data card."}
+ ];
+ const nav=document.getElementById("wxNav"),card=document.getElementById("wxCard"),pv=document.getElementById("wxPrev"),nx=document.getElementById("wxNext"),cnt=document.getElementById("wxCount");
+ let lastPart=null;const btns=[];
+ STEPS.forEach((s,i)=>{
+  if(s.part!==lastPart){const h=document.createElement("li");h.className="part";h.textContent=s.part;h.setAttribute("aria-hidden","true");nav.appendChild(h);lastPart=s.part;}
+  const li=document.createElement("li"),b=document.createElement("button");b.type="button";b.innerHTML="<span>"+i+"</span>"+s.t;b.addEventListener("click",()=>go(i,true));li.appendChild(b);nav.appendChild(li);btns.push(b);});
+ let cur=0;
+ function go(i,focus){cur=i;const s=STEPS[i];
+  btns.forEach((b,j)=>{if(j===i)b.setAttribute("aria-current","step");else b.removeAttribute("aria-current");});
+  const lab={h:" (human)",a:" (Agent)",s:""};
+  let h="<h3>Step "+i+": "+s.t+"</h3><p class='hint' style='margin-top:-.3rem'>"+s.part+"</p><div class='who'>"+s.who.map(([n,k])=>"<span class='chip "+k+"'>"+n+(n.includes("(")?"":lab[k])+"</span>").join("")+"</div>";
+  h+="<dl class='lead'><dt>What happens</dt><dd>"+s.what+"</dd><dt>Why</dt><dd>"+s.why+"</dd></dl>";
+  h+="<h4>Worked example</h4>"+s.body;
+  if(s.checks.length)h+="<h4>Quality checks applied here</h4><div class='who'>"+s.checks.map(c=>"<span class='chip k'>"+C[c]+"</span>").join("")+"</div>";
+  h+="<div class='result'><strong>Result. </strong>"+s.result+"</div>";
+  card.innerHTML=h;pv.disabled=i===0;nx.textContent=i===STEPS.length-1?"Back to start":"Next step";cnt.textContent="Step "+i+" of "+(STEPS.length-1);
+  if(focus&&window.innerWidth<860)card.scrollIntoView({block:"start"});
+  try{localStorage.setItem("mf2-wx",String(i));}catch(e){}}
+ pv.addEventListener("click",()=>go(Math.max(0,cur-1),true));
+ nx.addEventListener("click",()=>go(cur===STEPS.length-1?0:cur+1,true));
+ let start=0;try{const v=parseInt(localStorage.getItem("mf2-wx")||"0",10);if(v>=0&&v<STEPS.length)start=v;}catch(e){}
+ go(start,false);
+})();
+
+/* TOOL */
+(function(){
+ const K="mf-changelog-v2",tb=document.querySelector("#rows tbody"),turnIn=document.getElementById("turnIn");
+ const CLASSES=["Direct identifier","Quasi-identifier, clinically irrelevant","Quasi-identifier, clinically relevant","Third-party detail","Recognisable wording","Everything else"];
+ const DEC=["Accepted","Accepted, changed","Missed, added","False alarm, discarded","Escalated"];
+ const APPLY=[0,1,2];
+ const EX={turn:"I keep telling my dad, he’s 63, to walk, even just round the moshav. He says yes and then nothing. Five years commanding cadets taught me people don’t change past a certain point.",
+  rows:[["ENT-04","he’s 63","he’s in his sixties",1,"L0",0,""],
+        ["ENT-05","the moshav","the block",1,"L0",1,"Agent suggested “our small village”; “the block” keeps “walk round” natural"],
+        ["ENT-06","Five years commanding cadets","Years of leading a team",2,"L0",0,""],
+        ["ENT-01","my dad","",5,"L0",3,"Relationship role carrying the C-O/father label; identifies no one"]]};
+ const outText=document.getElementById("outText"),checksEl=document.getElementById("checks"),logOut=document.getElementById("logOut");
+ function addRow(v=["","","",1,"L0",0,""]){const tr=document.createElement("tr");
+  tr.innerHTML=`<td><input aria-label="Entity ID" value="${esc(v[0])}" placeholder="ENT-01"></td><td><input aria-label="Original span" value="${esc(v[1])}"></td><td><input aria-label="Substitute" value="${esc(v[2])}"></td><td><select aria-label="Span class">${CLASSES.map((c,i)=>`<option value="${i}"${i==v[3]?" selected":""}>${c}</option>`).join("")}</select></td><td><select aria-label="Edit level">${["L0","L1","L2"].map(l=>`<option${l===v[4]?" selected":""}>${l}</option>`).join("")}</select></td><td><select aria-label="Decision">${DEC.map((c,i)=>`<option value="${i}"${i==v[5]?" selected":""}>${c}</option>`).join("")}</select></td><td><input aria-label="Reason" value="${esc(v[6]||"")}" placeholder="One line"></td><td><button class="btn" type="button">Remove</button></td>`;
+  tr.querySelector("button").addEventListener("click",()=>{tr.remove();save();});
+  tr.querySelectorAll("input,select").forEach(i=>i.addEventListener("input",save));tb.appendChild(tr);}
+ function rows(){return [...tb.querySelectorAll("tr")].map(tr=>{const f=tr.querySelectorAll("input,select");return [f[0].value.trim(),f[1].value,f[2].value,+f[3].value,f[4].value,+f[5].value,f[6].value.trim()];});}
+ function save(){try{localStorage.setItem(K,JSON.stringify({turn:turnIn.value,rows:rows()}));}catch(e){}}
+ function resetOut(){outText.innerHTML="<span class='hint'>Apply decisions to see the rewritten turn.</span>";checksEl.innerHTML="<li class='hint' style='padding-left:0'>No checks run yet.</li>";logOut.value="";}
+ function load(d){turnIn.value=d.turn||"";tb.innerHTML="";(d.rows&&d.rows.length?d.rows:[["","","",1,"L0",0,""]]).forEach(addRow);}
+ let saved=null;try{saved=JSON.parse(localStorage.getItem(K)||"null");}catch(e){}
+ load(saved&&typeof saved==="object"?saved:EX);
+ turnIn.addEventListener("input",save);
+ document.getElementById("addRow").addEventListener("click",()=>{addRow();save();});
+ document.getElementById("loadEx").addEventListener("click",()=>{load(EX);save();resetOut();});
+ document.getElementById("clearAll").addEventListener("click",()=>{load({turn:"",rows:[]});save();resetOut();});
+ const wc=s=>(s.trim().match(/\S+/g)||[]).length;
+ const disf=s=>(s.match(/\b(um+|uh+|erm|hmm+|mm-hmm|you know)\b|\((?:laugh|cry|sigh|cluck|shudder)\w*\)|…|\.\.\./gi)||[]).length;
+ document.getElementById("apply").addEventListener("click",()=>{
+  const src=turnIn.value,rs=rows().filter(r=>r[1]),checks=[];
+  if(!src.trim()){checksEl.innerHTML="<li class='warn'>Paste a turn first.</li>";return;}
+  if(!rs.length){checksEl.innerHTML="<li class='warn'>Add at least one row with an original span.</li>";return;}
+  const hits=[];let escalated=0;
+  rs.forEach(r=>{const n=src.split(r[1]).length-1,dec=r[5];
+   if(n===0)checks.push(["warn",`“${r[1]}” is not in the turn. Check spelling and apostrophes (’ and ' are different).`]);
+   if((dec===1||dec===3)&&!r[6])checks.push(["warn",`“${r[1]}” (${DEC[dec]}) needs a one-line reason.`]);
+   if(dec===3){if(r[2].trim())checks.push(["warn",`“${r[1]}” is a false alarm, so it is kept word for word; its substitute is ignored.`]);else if(n)checks.push(["ok",`“${r[1]}” is a false alarm and is kept word for word.`]);return;}
+   if(dec===4){escalated++;checks.push(["warn",`“${r[1]}” is escalated: the verifier decides, and the session cannot be signed off until then.`]);return;}
+   if(n>1)checks.push(["warn",`“${r[1]}” appears ${n} times; all are replaced. Make sure each one identifies.`]);
+   if(!r[2].trim())checks.push(["warn",`“${r[1]}” has no substitute. Identifying details are replaced, never deleted.`]);
+   if(!r[0])checks.push(["warn",`“${r[1]}” has no entity ID, so its substitute cannot be reused in later sessions.`]);
+   let i=src.indexOf(r[1]);while(i>=0){hits.push({s:i,e:i+r[1].length,sub:r[2]});i=src.indexOf(r[1],i+r[1].length);} });
+  hits.sort((a,b)=>a.s-b.s);
+  if(hits.some((h,i)=>i&&h.s<hits[i-1].e))checks.push(["warn","Two rows overlap in the turn. Make each original span distinct."]);
+  let out="",html="",p=0,used=0;
+  hits.forEach(h=>{if(h.s<p)return;out+=src.slice(p,h.s)+h.sub;html+=esc(src.slice(p,h.s))+"<mark>"+esc(h.sub)+"</mark>";p=h.e;used+=h.e-h.s;});
+  out+=src.slice(p);html+=esc(src.slice(p));
+  outText.innerHTML=html;
+  const m={};rs.filter(r=>APPLY.includes(r[5])).forEach(r=>{if(!r[0])return;if(m[r[0]]!==undefined&&m[r[0]]!==r[2])checks.push(["warn",`${r[0]} has two different substitutes (“${m[r[0]]}” and “${r[2]}”). One entity, one substitute in every session.`]);m[r[0]]=r[2];});
+  rs.filter(r=>APPLY.includes(r[5])).forEach(r=>{const d=wc(r[2])-wc(r[1]);if(r[4]==="L0"&&d>2)checks.push(["warn",`“${r[2]}” adds ${d} words. L0 allows at most two extra; mark it L1 if the clause needs rephrasing.`]);});
+  checks.push(["ok",`Only the applied spans changed; the other ${src.length-used} characters are copied exactly.`]);
+  checks.push(["ok","One turn in, one turn out."]);
+  checks.push([disf(src)===disf(out)?"ok":"warn",`Hesitations and markers: ${disf(src)} before, ${disf(out)} after.`]);
+  if(!checks.some(c=>c[0]==="warn"))checks.push(["ok","All basic checks pass. Next: the verifier reads the complete session against the original and this log, and signs off."]);
+  checksEl.innerHTML=checks.map(c=>`<li class="${c[0]}">${esc(c[1])}</li>`).join("");
+  logOut.value=rs.map(r=>[r[0]||"(no ID)",`“${r[1]}”`,APPLY.includes(r[5])?`“${r[2]}”`:"(kept)",CLASSES[r[3]],APPLY.includes(r[5])?r[4]:"—",DEC[r[5]],r[6]||"—","verifier: pending"].join(" | ")).join("\n");
+  save();
+ });
+ document.getElementById("copyLog").addEventListener("click",async()=>{const msg=document.getElementById("copyMsg");
+  try{await navigator.clipboard.writeText(logOut.value);msg.textContent="Copied.";}catch(e){logOut.focus();logOut.select();msg.textContent="Selected. Press Ctrl+C (or ⌘C) to copy.";}});
+})();
+})();
+</script>
+</body>
+</html>
